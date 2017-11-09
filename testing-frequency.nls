@@ -1,0 +1,53 @@
+;; THIs is used if we want to keep a test frequency. In the NHAS goals paper people were diganosed to maintain x% unaware 
+;;But if needed can diagnosed based on frequency
+to set-next-test
+  ifelse (index-patient? = true  )
+  [
+      
+    set next-test (1000 * time-unit);  + random (test-frequency - 1))
+  ]
+  [
+     set test-frequency 1 * time-unit ;; 
+      
+      if sex <= 2 and random-float 1 < 1 ;; assuming 
+      [set test-frequency 5 *  time-unit]
+      
+      
+      ;;asigning compliance
+      if random-float 1 <= 0.6 ;or (index-patient? = true and new-infections = 1)
+      [ifelse random-float 1 < 0.1 / 0.4
+        [set test-frequency (test-frequency + 10 * time-unit)];; 10% never tested
+        [set test-frequency (test-frequency + 2 * time-unit)];; proportion tested at least once
+      ];   
+      
+      let delay 1
+  set next-test (ticks + delay) + random (test-frequency - 1)
+  ]
+  
+end
+
+
+to update-next-test
+  
+  set next-test ticks + test-frequency
+end
+
+to set-CD4-diagnosis ;; determining CD4 count at diagnosis for those diagnosed prior to entering simulation 
+  
+  let val 0.25 ;; proportion getting diganosed above 500 Cd4 for MSM
+  if sex <= 2 [set val 0.1] ;; proportion getting diganosed above 500 Cd4 for HET
+  
+  ifelse random-float 1 <= 0.24
+    [ifelse random-float 1 <= 0.43
+      [set CD4-diagnosis 4 + random 46]
+      [set CD4-diagnosis 50 + random 150]
+    ]
+  ; [set CD4-count-testing 0]
+  
+    [ifelse random-float 1 <= val / .76 ;; 76% above 200
+      [set CD4-diagnosis 501 + random 300]
+      [set CD4-diagnosis 200 + random 300]
+    ]
+  set-testing-variables
+  set-ART-variables
+end

@@ -1,0 +1,49 @@
+;  1. Persons infected in past month and have multiple partners in same month
+;The below are persons infected anywhere before the past month and during a one-month period have
+;2. Only one partner: he/she is a main partner and is uninfected
+;3. Only one partner: he/she is a casual partner and is uninfected
+;4. Two main partners (no casual partners): at least one is uninfected  (we model at most 2 main partners)
+;5. Two or more casual partners (no main partners): at least one is uninfected
+;6. Two or more partners (at least one is main AND at least one is casual): at least one is uninfected
+
+to calcTable3
+  let count-casuals item 2 counter-partner 
+  ;1.
+ ifelse (age - age-at-infection) <= 0.09
+ [
+   if sex = 3 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) > 1 
+   [let val num-trans-One + num-trans-Two + num-trans-Casual + item 0 numTranstable3
+     set numTranstable3 replace-item 0 numTranstable3 val]
+ ]
+ [
+   ;2.
+   if sex = 3 and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1  
+   [let val num-trans-One + item 1 numTranstable3
+     set numTranstable3 replace-item 1 numTranstable3 val]
+   
+   ;3.
+   if sex = 3 and (item 2 counter-partner  - count-casuals) = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
+   [let val num-trans-Casual + item 2 numTranstable3
+     set numTranstable3 replace-item 2 numTranstable3 val]
+   
+   ;4.
+   if sex = 3 and (item 0 partner-array + item 1 partner-array) = 2 and (item 2 counter-partner  - count-casuals) = 0
+   [let val num-trans-One + num-trans-Two + item 3 numTranstable3
+     set numTranstable3 replace-item 3 numTranstable3 val]
+   
+    ;5.
+   if sex = 3 and (item 2 counter-partner  - count-casuals) > 1 and (item 0 partner-array + item 1 partner-array) = 0
+   [let val num-trans-Casual + item 4 numTranstable3
+     set numTranstable3 replace-item 4 numTranstable3 val]
+   
+   ;6.
+   if sex = 3 and (item 2 counter-partner  - count-casuals) > 0 and (item 0 partner-array + item 1 partner-array) > 0
+   [let val num-trans-One + num-trans-Two + num-trans-Casual + item 5 numTranstable3
+     set numTranstable3 replace-item 5 numTranstable3 val]
+   
+   
+   
+ ]
+ 
+   
+end

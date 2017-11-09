@@ -1,0 +1,423 @@
+;;this file contains all variables that each person will be assigned. 
+;;The procedures here are called when a person  gets newly infected and inital variables are set
+__includes [];["global-initialization.nls" "people-initialization.nls"]
+
+
+breed [people person]
+
+people-own [
+  infected-2013-2022? 
+  
+  counter-partner
+  
+  ; t-start
+  acute-stg-length
+  test-frequency
+  new-infections ;; only index-patients newly diagnosed have value 1 rest 0
+  next-test
+  dummy
+  trans-year
+  index-patient?
+  age-at-infection
+  age
+  age-Diag
+  sex
+  quarter-drop-out
+  retention-in-ART
+  stage
+  num-partner
+  no-partner
+  casual-partner
+  num-acts-yearly-upper
+  num-acts-yearly-lower
+  prob-anal-sex
+  protected-acts-unaware
+  protected-acts-casual-unaware
+  
+  
+  partner-array ;array of length 2 that takes binary values containing information of index person's partners 
+                ;[one Tw0 ]; one- first partner of index person; Two- concurrent partner of index person;
+                ;  oneTwo- concurrrent partner of the first partner; TwoTwo-concurrent partner of partner 2; 1= there is a partner ; 0= no partner
+                ; e.g.: partner-array [ 1 0 ] implies person has only one partner; 
+                ;e.g.: partner-array [ 1 1] implies person has concurrent partners
+  partner-length
+  partner-counter
+  partner-infected?
+  ;casual-partners-concurrent
+  
+  prevalence-val
+  ; trans-rate  
+  num-trans-One ; transmission to partner 1
+  num-trans-Two ; transmission to partner 2 (when concurrency exists)
+  num-trans-Casual ; transmission to casual partners 
+  num-trans-Needle;; needles transmission
+  casuals-monthly-counter
+  acts-monthly-counter
+  monthly-partner1
+  monthly-partner2
+  casual-HIV-status
+  
+  prev-num-trans
+  num-trans-incprev
+  ;new-infections
+  serosorting
+  
+  
+  index?
+  sexual?
+  ; concurrency
+  in-concurrency
+  mix?
+  bi-sexual?
+  
+  
+  
+  
+  non-AIDS-death
+  quarter-nonAIDS-death
+  
+  
+  CD4-at-care
+  CD4-to-start-ART ;; set CD4 count at which ART should start
+  initial-suppression-prob
+  
+  rate-viral-rebound
+  
+  regimen1-dur
+  regimen2-dur
+  regimen3-dur
+  regimen4-dur 
+  sexual-Transmission?
+  
+  infected-previous-quarter?
+  infected?
+  aware-previous-quarter?
+  aware?
+  total-regimen
+  prev-total-regimen
+  on-treatment?
+  prev-on-treatment?
+  prev-prev-on-treatment?
+  regimen
+  prev-regimen
+  time-on-therapy 
+  
+  viral-load
+  viral-load-stratum
+  
+  CD4-count-testing ;;MOVED TO PERSON_SPECIFIC FOR TESTIG PROJECT
+  CD4-diagnosis;; at actual diagnosis
+  CD4-count
+  prev-CD4-count
+  CD4-change
+  CD4-stratum
+  CD4-max
+  
+  OI-type
+  prev-OI-type
+  OI?
+  prev-OI?
+  prev-AIDS?
+  AIDS?
+  
+  CD4-ART ;;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
+          ;of CD4 decline might not exactly coincide with the required start
+  quarter-ART-start
+  age-ART-start
+  
+  clinical-AIDS;;CHECK IF USED: takes values 1 or 2 only
+  
+  
+  death-with-ART
+  death-without-ART
+  dead
+  prev-dead
+  discounted-life
+  
+  time-diag-to-death;;CHECK IF USED
+  
+  discount-factor
+  discount-rate-factor
+  QALYs
+  sum-QALYS
+  discounted-QALYs
+  linked-to-care?
+  in-care?
+  quarter-linked-care
+  costs
+  discounted-costs
+  number-transmissions
+  
+  life-time-transmissions
+  
+  ;; If true, the person is infected.  It may be known or unknown.
+  ;; If true, the infection is known (and infected? must also be true).
+  
+  
+  ;;;Collecting information
+  time-on-salvage
+  time-on-ART
+  
+  life-with-infection
+  life-lost-to-infection
+  no-life-lost-from-infection?
+  
+  ; sum-disc-life-with-HIV 
+  ; sum-disc-life-no-HIV 
+  
+  
+  disc-life-lost-to-infection 
+  disc-QALYs-lost
+  discount-life-if-no-HIV
+  
+  time-onset-AIDS
+  die-from-CD40? 
+  
+  TOTAL-COSTS
+  TOTAL-QALYs
+  undiscounted-Total-costs
+  total-utilization-cost ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+  total-regimen-cost 
+  total-OI-cost
+  yearly-cost
+  
+  util-cost
+  test-cost
+  care-service-cost 
+  regimen-cost-quarter
+  oi-cost-quarter
+]
+
+
+
+
+
+to set-infected-variables  
+  set infected-2013-2022?  false
+  
+  set  acute-stg-length  0
+  ; set color red 
+  
+  set trans-year ceiling((ticks - sim-dry-run) / time-unit)
+  
+  
+  
+  ; set-next-test ;; WAS using this if people tested based on frequency of test instead of saying diagnosed people such that 20% are unaware
+  
+  ifelse random-float 100 <= percent-IDU-transmission
+    [set sexual-Transmission? false]
+    [set sexual-Transmission? true]
+  ;print sexual-Transmission? 
+  
+  if sex >= 4 [ set sexual-Transmission? false]
+  
+  
+  ;;SET INTIAL VALUES OF SIMULATION VARIABLES: values on first quarter of infection
+  
+  ;      let cum-age [0.05822441 0.211509082 0.514938041 0.842047191 0.96740791 1]
+  ;
+  ;set age (floor(min-age + ticks / 4))
+  set age-at-infection age
+  ;   set t-start ticks
+  set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+  
+  ;if not index-patient?
+  ;[print age]
+  set infected-previous-quarter? false           
+  set infected? true
+  set aware-previous-quarter? false
+  set aware? false
+  set prev-total-regimen 0
+  set total-regimen 0
+  set prev-prev-on-treatment? false
+  set prev-on-treatment? false
+  set on-treatment? false
+  set prev-regimen 0
+  set regimen 0
+  set time-on-therapy 1
+  set viral-load trunc-normal-random-number 5.3 0.459 4.4 6.2; 5.3
+  set-viral-load-stratum
+  
+  ;       let get-val normal-random-number 825 38.27 
+  ;      while [get-val > 900 or get-val < 750]
+  ;      [set get-val normal-random-number 900 38.27 ]
+  
+  let get-val 550 + random (750 - 550) ;; calibrated to match time time to CD4 ddecline in Lodi et al, CID, 2011
+  
+  set prev-CD4-count get-val 
+  ;set prev-CD4-count 900
+  set CD4-count prev-CD4-count
+  
+  set-CD4-stratum
+  set prev-OI-type 0
+  set OI-type 0
+  set prev-OI? false
+  set OI? false
+  set prev-AIDS? false
+  set AIDS? false
+  set CD4-ART 0;;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
+               ;of CD4 decline might not exactly coincide with the required start
+  set quarter-ART-start 0 ;(;quarter-ART-start is month at first ART initiation. All other ART time parameters get reset when dropping out of care and reentry. This does not
+  set age-ART-start 0
+  
+  set clinical-AIDS 1;;CHECK IF USED
+  
+                     ; ;set-death-with-ART
+  set-death-without-ART
+  set prev-dead 0
+  set dead 0
+  set discounted-life 0
+  
+  ; set-time-diag-to-death;;CHECK IF USED
+  
+  ;set-discount-factor
+  ; set-discount-rate-factor
+  ; set-QALYs
+  set sum-QALYS 0
+  set discounted-QALYs 0
+  set linked-to-care? false
+  set in-care? false
+  ; set-costs
+  ; set-discounted-costs
+  ; set-number-transmissions
+  set life-time-transmissions 0 
+  
+  set retention-in-ART 0
+  
+  ; set-alive-if-no-HIV?
+  
+  set total-utilization-cost 0;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+  set total-regimen-cost 0
+  set total-OI-cost 0
+  
+  set TOTAL-COSTS 0
+  set TOTAL-QALYs 0
+  set undiscounted-Total-costs 0
+  set util-cost 0 
+  set test-cost 0
+  set care-service-cost 0
+  set  regimen-cost-quarter 0
+  set oi-cost-quarter 0
+  
+  ; set yearly-cost [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]  
+  
+  set discount-life-if-no-HIV 0
+  set-discount-life-if-no-HIV 
+end
+
+
+
+
+to set-discount-life-if-no-HIV
+  let i ticks
+  repeat non-AIDS-death * 12 / time-unit
+  [ set i i + 1
+    let discount-rate-factor-global (1 + discount-rate) ^ floor((i - t-start - 1) / time-unit)
+    set discount-life-if-no-HIV (discount-life-if-no-HIV + (1 / discount-rate-factor-global))
+  ]
+end
+
+to set-testing-variables
+  set aware? true
+  set age-Diag age
+  set stage 3
+  set CD4-diagnosis CD4-count
+  set countNewDiagnosis replace-item (sex - 1) countNewDiagnosis (item (sex - 1) countNewDiagnosis + 1)
+  
+  ;;setting CD4 at care and at start of ART;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;13-24  25-34  35-44  45-54  >55
+
+  let care-index 0
+  if age < 25 [ set care-index 0];
+  if age >= 25 and age < 35 [set care-index 1];
+  if age >= 35 and age < 44 [set care-index 2];
+  if age >= 45 and age < 54 [set care-index 3];
+  if age >= 55 [set care-index 4]
+  
+  let randvalue random-float 1
+  ifelse randvalue <= item (sex - 1) care-at-diag ;; % linking to care within 3 months of diagnosis
+  ; ifelse randvalue <= item (care-index) care-at-diag-byage ;; % linking to care within 3 months of diagnosis
+    [set CD4-at-care CD4-diagnosis + random 18];; adjusting for CD4 decline in 3 months
+    [ifelse randvalue <= 0.9
+      [set CD4-at-care 200]
+      [set CD4-at-care 36]
+    ]
+  ;print CD4-at-care
+  if CD4-diagnosis < CD4-at-care
+    [set CD4-at-care CD4-diagnosis]
+  set CD4-to-start-ART CD4-at-care
+  if CD4-to-start-ART > CD4-start-ART-guideline
+    [set CD4-to-start-ART CD4-start-ART-guideline ]
+  ;      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+end
+
+to set-ART-variables     
+  ;;determine initial suppression and duration on the regimens;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+  ifelse CD4-to-start-ART <= 50
+    [ set initial-suppression-prob (item 0 probability-initial-suppression)]
+    [ifelse  CD4-to-start-ART <= 200
+      [ set initial-suppression-prob (item 1 probability-initial-suppression)]
+      [ set initial-suppression-prob (item 2 probability-initial-suppression)]
+    ]
+  
+  
+  set rate-viral-rebound []
+  
+  if CD4-to-start-ART  < 100 
+    [ set rate-viral-rebound lput (0.05 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+    ]
+  
+  if CD4-to-start-ART  >= 100 and CD4-to-start-ART  < 200
+    [ set rate-viral-rebound lput (0.025 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+    ]
+  
+  if CD4-to-start-ART  >= 200 and CD4-to-start-ART  < 300
+    [
+      set rate-viral-rebound lput (0.018 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+    ]
+  
+  if CD4-to-start-ART  >= 300 and CD4-to-start-ART  < 400
+    [
+      set rate-viral-rebound lput (0.015 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+    ]
+  if CD4-to-start-ART  >= 400 
+    [
+      set rate-viral-rebound lput (0.014 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+    ]
+  ;      
+  set rate-viral-rebound lput ((item 0 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
+  set rate-viral-rebound lput ((item 1 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
+  set rate-viral-rebound lput ((item 2 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
+  
+  
+  set regimen1-dur 0
+  set regimen2-dur 0
+  set regimen3-dur 0
+  set regimen4-dur 0
+  
+  if random-float 1 <= initial-suppression-prob
+  ;[set regimen1-dur floor (random-exponential ((4 / (item 0 rate-viral-rebound))))]
+    [set regimen1-dur 1 + floor (ln (random-float 1) / (- item 0 rate-viral-rebound / time-unit))]
+  
+  if random-float 1 <= initial-suppression-prob
+  ;[set regimen2-dur floor (random-exponential ((4 / (item 1 rate-viral-rebound))))]
+    [set regimen2-dur 1 + floor (ln (random-float 1) / (- item 1 rate-viral-rebound / time-unit))]
+  
+  if random-float 1 <= initial-suppression-prob
+  ;[set regimen3-dur floor (random-exponential ((4 / (item 2 rate-viral-rebound))))]
+    [set regimen3-dur 1 + floor (ln (random-float 1) / (- item 2 rate-viral-rebound / time-unit))]
+  
+  if random-float 1 <= initial-suppression-prob and num-regimen = 4
+  ;[set regimen3-dur floor (random-exponential ((4 / (item 2 rate-viral-rebound))))]
+    [set regimen4-dur 1 + floor (ln (random-float 1) / (- item 3 rate-viral-rebound / time-unit))]
+  
+  ; print regimen1-dur
+  ; print regimen2-dur
+  ; print regimen3-dur
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  
+end
+
+

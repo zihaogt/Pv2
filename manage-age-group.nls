@@ -1,0 +1,404 @@
+;;controlling age at infection to match observed incidence in US. That is re-assign age of new infectiosn such that the 
+;;proportion of individuals in age-group matches published estimates
+
+;;;;IF CONTROLLING ONCE EVERY YEAR
+to manage-age-group
+  let age-group [12 14 19 24 29 34 39 44 49 54 59 64 70] ;; upper bound of age group;; 13 is minimum age  
+let PLWH  2 ;; = 1 if controlling age by age distribution of PLWH; !=1 if controlling by age distribution of incidence
+ifelse PLWH = 1
+[
+   ;;age distribution of PLWH
+     let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
+   
+                                                                                           
+    ask people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+    [
+      set dummy 0
+    ]
+    
+    let val 0
+    
+    let i 1
+    repeat length age-group - 1
+    [
+       
+      ;; keeping age distribution of PLWH constant over years
+       set val (count people with [infected? = true and dead = 0 ] * item (i - 1) actual-age-dist) - count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] 
+      
+      if val > 0
+      [
+        let num 0
+        foreach sort-by [[age] of ?1 < [age] of ?2] people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and dummy = 0 and age > item i age-group]
+        [
+          if num < val
+          [ ask ?
+            [
+              set age round ((item (i - 1) age-group + 1) + random ((item i age-group) - (item (i - 1) age-group) - 1))
+              set age-at-infection age
+              set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+              
+              set dummy 1
+              set-num-partners
+            ]
+          set num num + 1
+          ]
+        ]
+        
+        if val < 0
+        [set val abs(val)
+          ask n-of (val)  people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group]
+          [
+            set age round (item (i) age-group + 1) + random 5;((item i + 1 age-group) - (item (i - 1) age-group) - 1))
+            set age-at-infection age
+            set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+            
+            set-num-partners
+          ]
+        ]
+        
+      
+      ]
+      
+      
+      set i i + 1
+    ]
+    
+]  
+
+[
+;;;;;;;;;;;;;;;MSM  sex= 3;;;;;;;;;;;;;;;;
+                                                       
+  ;;age distribution of PLWH
+    ; let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
+   
+     ;;age distribution of new incidence 
+     ;                [12 14       19    24   29    34    39    44    49    54     59   64 70] 
+    let actual-age-dist [0.001  0.049  0.21  0.16  0.15  0.12  0.12  0.09  0.06  0.04  0  0];;
+    ;if sex-num <= 2
+    ;[
+     ; let actual-age-dist [0.001  0.039  0.17  0.15  0.15  0.12  0.11  0.11  0.1  0.05  0  0]
+      ;]
+                                                                                         ;let dummy 0
+    ask people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and sex = 3 ]
+    [
+      set dummy 0
+    ]
+    
+    let val 0
+    
+    let i 1
+    repeat length age-group - 1
+    [
+       ;; ;; keeping age distribution of new incidence constant over years
+      set val (count people with [infected? = true and sex = 3  and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)] * item (i - 1) actual-age-dist) - count people with [infected? = true and sex = 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group] 
+      
+      if val > 0
+      [
+        let num 0
+        foreach sort-by [[age] of ?1 < [age] of ?2] people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and dummy = 0 and age > item i age-group]
+        [
+          if num < val
+          [ ask ?
+            [
+              set age round ((item (i - 1) age-group + 1) + random ((item i age-group) - (item (i - 1) age-group) - 1))
+              set age-at-infection age
+              set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+              
+              set dummy 1
+              set-num-partners
+            ]
+          set num num + 1
+          ]
+        ]
+        
+        if val < 0
+        [set val abs(val)
+          ask n-of (val)  people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group]
+          [
+            set age round (item (i) age-group + 1) + random 5;((item i + 1 age-group) - (item (i - 1) age-group) - 1))
+            set age-at-infection age
+            set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+            
+            set-num-partners
+          ]
+        ]
+        
+      
+      ]
+      
+      
+      set i i + 1
+    ]
+    
+    
+ ;;;;;;;;;;;;;;;HET and IDU sex != 3;;;;;;;;;;;;;;;;
+                                                       
+  ;;age distribution of PLWH
+    ; let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
+  
+     ;;age distribution of new incidence 
+   ; let actual-age-dist [0.001  0.039  0.21  0.19  0.15  0.12  0.12  0.09  0.065  0.015  0  0];;
+    ;if sex-num <= 2
+    ;[                     0.001  0.049  0.21  0.19  0.15  0.12  0.12  0.09  0.065  0.005  0  0
+      set actual-age-dist [ 0.001  0.049  0.21  0.16  0.15  0.12  0.12  0.09  0.06  0.04  0  0];[0.001  0.039  0.17  0.15  0.15  0.12  0.11  0.11  0.1  0.05  0  0]
+      ;]
+                                                                                         ;let dummy 0
+    ask people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and sex != 3]
+    [
+      set dummy 0
+    ]
+    
+    set val 0
+    
+    set i 1
+    repeat length age-group - 1
+    [
+       ;; ;; keeping age distribution of new incidence constant over years
+      set val (count people with [infected? = true and sex != 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)] * item (i - 1) actual-age-dist) - count people with [infected? = true and sex != 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group] 
+      
+      if val > 0
+      [
+        let num 0
+        foreach sort-by [[age] of ?1 < [age] of ?2] people with [infected? = true and sex != 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and dummy = 0 and age > item i age-group]
+        [
+          if num < val
+          [ ask ?
+            [
+              set age round ((item (i - 1) age-group + 1) + random ((item i age-group) - (item (i - 1) age-group) - 1))
+              set age-at-infection age
+              set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+              
+              set dummy 1
+              set-num-partners
+            ]
+          set num num + 1
+          ]
+        ]
+        
+        if val < 0
+        [set val abs(val)
+          ask n-of (val)  people with [infected? = true and sex != 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group]
+          [
+            set age round (item (i) age-group + 1) + random 5;((item i + 1 age-group) - (item (i - 1) age-group) - 1))
+            set age-at-infection age
+            set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+            
+            set-num-partners
+          ]
+        ]
+        
+      
+      ]
+      
+      
+      set i i + 1
+    ]
+     
+]  
+end
+
+;;IF UPDATING EVERY TIME_UNIT
+
+;to manage-age-group
+;  let age-group [12 14 19 24 29 34 39 44 49 54 59 64 70] ;; upper bound of age group;; 13 is minimum age  
+;let PLWH  2 ;; one if controlling age by age distribution of PLWH; 0 if controlling by age distribution of incidence
+;ifelse PLWH = 1
+;[
+;   ;;age distribution of PLWH
+;     let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
+;   
+;                                                                                             ;let dummy 0
+;    ask people with [infected? = true and infected-previous-quarter? = false  ]
+;    [
+;      set dummy 0
+;    ]
+;    
+;    let val 0
+;    
+;    let i 1
+;    repeat length age-group - 1
+;    [
+;       
+;      ;; keeping age distribution of PLWH constant over years
+;       set val (count people with [infected? = true and dead = 0 ] * item (i - 1) actual-age-dist) - count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] 
+;      ;; ;; keeping age distribution of new incidence constant over years
+;     ; set val (count people with [infected? = true and sex = 3  and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)] * item (i - 1) actual-age-dist) - count people with [infected? = true and sex = 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group] 
+;      
+;      if val > 0
+;      [
+;        let num 0
+;        foreach sort-by [[age] of ?1 < [age] of ?2] people with [infected? = true and infected-previous-quarter? = false and dummy = 0 and age > item i age-group]
+;        [
+;          if num < val
+;          [ ask ?
+;            [
+;              set age round ((item (i - 1) age-group + 1) + random ((item i age-group) - (item (i - 1) age-group) - 1))
+;              set age-at-infection age
+;              set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+;              
+;              set dummy 1
+;              set-num-partners
+;            ]
+;          set num num + 1
+;          ]
+;        ]
+;        
+;        if val < 0
+;        [set val abs(val)
+;          ask n-of (val)  people with [infected? = true and infected-previous-quarter? = false and age <= item i age-group and age > item (i - 1) age-group]
+;          [
+;            set age round (item (i) age-group + 1) + random 5;((item i + 1 age-group) - (item (i - 1) age-group) - 1))
+;            set age-at-infection age
+;            set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+;            
+;            set-num-partners
+;          ]
+;        ]
+;        
+;      
+;      ]
+;      
+;      
+;      set i i + 1
+;    ]
+;    
+;]  
+;
+;[
+;;;;;;;;;;;;;;;;MSM  sex= 3;;;;;;;;;;;;;;;;
+;                                                       
+;  ;;age distribution of PLWH
+;    ; let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
+;   
+;     ;;age distribution of new incidence 
+;    let actual-age-dist [0.001  0.039  0.21  0.19  0.15  0.12  0.12  0.09  0.065  0.015  0  0];;
+;    ;if sex-num <= 2
+;    ;[
+;     ; let actual-age-dist [0.001  0.039  0.17  0.15  0.15  0.12  0.11  0.11  0.1  0.05  0  0]
+;      ;]
+;                                                                                         ;let dummy 0
+;    ask people with [infected? = true and infected-previous-quarter? = false and sex = 3 ]
+;    [
+;      set dummy 0
+;    ]
+;    
+;    let val 0
+;    
+;    let i 1
+;    repeat length age-group - 1
+;    [
+;      ;set age-dist lput ((count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] / count people with [infected? = true and dead = 0 ]) - item (i - 1) actual-age-dist) age-dist
+;      
+;      ;; keeping age distribution of PLWH constant over years
+;       ;set val (count people with [infected? = true and dead = 0 ] * item (i - 1) actual-age-dist) - count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] 
+;      ;; ;; keeping age distribution of new incidence constant over years
+;      set val (count people with [infected? = true and sex = 3  and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)] * item (i - 1) actual-age-dist) - count people with [infected? = true and sex = 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group] 
+;      
+;      if val > 0
+;      [
+;        let num 0
+;        foreach sort-by [[age] of ?1 < [age] of ?2] people with [infected? = true and sex = 3 and infected-previous-quarter? = false and dummy = 0 and age > item i age-group]
+;        [
+;          if num < val
+;          [ ask ?
+;            [
+;              set age round ((item (i - 1) age-group + 1) + random ((item i age-group) - (item (i - 1) age-group) - 1))
+;              set age-at-infection age
+;              set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+;              
+;              set dummy 1
+;              set-num-partners
+;            ]
+;          set num num + 1
+;          ]
+;        ]
+;        
+;        if val < 0
+;        [set val abs(val)
+;          ask n-of (val)  people with [infected? = true and sex = 3 and infected-previous-quarter? = false and age <= item i age-group and age > item (i - 1) age-group]
+;          [
+;            set age round (item (i) age-group + 1) + random 5;((item i + 1 age-group) - (item (i - 1) age-group) - 1))
+;            set age-at-infection age
+;            set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+;            
+;            set-num-partners
+;          ]
+;        ]
+;        
+;      
+;      ]
+;      
+;      
+;      set i i + 1
+;    ]
+;    
+;    
+; ;;;;;;;;;;;;;;;HET and IDU sex != 3;;;;;;;;;;;;;;;;
+;                                                       
+;  ;;age distribution of PLWH
+;    ; let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
+;  
+;     ;;age distribution of new incidence 
+;   ; let actual-age-dist [0.001  0.039  0.21  0.19  0.15  0.12  0.12  0.09  0.065  0.015  0  0];;
+;    ;if sex-num <= 2
+;    ;[
+;      set actual-age-dist [0.001  0.039  0.17  0.15  0.15  0.12  0.11  0.11  0.1  0.05  0  0]
+;      ;]
+;                                                                                         ;let dummy 0
+;    ask people with [infected? = true and infected-previous-quarter? = false and sex != 3]
+;    [
+;      set dummy 0
+;    ]
+;    
+;    set val 0
+;    
+;    set i 1
+;    repeat length age-group - 1
+;    [
+;      ;set age-dist lput ((count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] / count people with [infected? = true and dead = 0 ]) - item (i - 1) actual-age-dist) age-dist
+;      
+;      ;; keeping age distribution of PLWH constant over years
+;       ;set val (count people with [infected? = true and dead = 0 ] * item (i - 1) actual-age-dist) - count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] 
+;      ;; ;; keeping age distribution of new incidence constant over years
+;      set val (count people with [infected? = true and sex != 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)] * item (i - 1) actual-age-dist) - count people with [infected? = true and sex != 3 and dead = 0 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) and age <= item i age-group and age > item (i - 1) age-group] 
+;      
+;      if val > 0
+;      [
+;        let num 0
+;        foreach sort-by [[age] of ?1 < [age] of ?2] people with [infected? = true and sex != 3 and infected-previous-quarter? = false and dummy = 0 and age > item i age-group]
+;        [
+;          if num < val
+;          [ ask ?
+;            [
+;              set age round ((item (i - 1) age-group + 1) + random ((item i age-group) - (item (i - 1) age-group) - 1))
+;              set age-at-infection age
+;              set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+;              
+;              set dummy 1
+;              set-num-partners
+;            ]
+;          set num num + 1
+;          ]
+;        ]
+;        
+;        if val < 0
+;        [set val abs(val)
+;          ask n-of (val)  people with [infected? = true and sex != 3 and infected-previous-quarter? = false and age <= item i age-group and age > item (i - 1) age-group]
+;          [
+;            set age round (item (i) age-group + 1) + random 5;((item i + 1 age-group) - (item (i - 1) age-group) - 1))
+;            set age-at-infection age
+;            set non-AIDS-death (item (age - 10) define-non-AIDS-death) * (time-unit / 12)
+;            
+;            set-num-partners
+;          ]
+;        ]
+;        
+;      
+;      ]
+;      
+;      
+;      set i i + 1
+;    ]
+;     
+;]  
+;end
