@@ -1,0 +1,150 @@
+to set-initial-num-IDU-partners
+
+  set IDU-ptnr-positive [0 0 0 0 0]
+  set IDU-ptnr-shared [0 0 0 0 0]
+  ifelse needle-sharing? = true
+  [set num-IDU-ptnr random length (IDU-ptnr-positive) + 1]
+  [set num-IDU-ptnr 0]
+  
+  let ind 0 
+ ;print total-IDU-prevalence
+  while [ind < num-IDU-ptnr]
+  [if random-float 1 <= IDU-sharing-prevalence
+    [set IDU-ptnr-positive replace-item ind IDU-ptnr-positive 1]
+    set ind ind + 1
+  ]
+
+end
+
+to set-trans-num-IDU-partners [partner-num]
+  
+  set IDU-ptnr-positive [0 0 0 0 0]
+  set IDU-ptnr-shared [0 0 0 0 0]
+  
+  ifelse partner-num >= 4 or random-float 1 <= percent-IDU-sharing
+  [set needle-sharing? true
+    set num-IDU-ptnr random length (IDU-ptnr-positive) + 1]
+  [set num-IDU-ptnr 0
+    set needle-sharing? false] 
+    
+  let ind 0 
+
+  ifelse partner-num >= 4
+  [while [ind < num-IDU-ptnr - 1]
+    [if random-float 1 <= IDU-sharing-prevalence
+      [set IDU-ptnr-positive replace-item ind IDU-ptnr-positive 1]
+      set ind ind + 1
+    ]
+    set IDU-ptnr-positive replace-item (num-IDU-ptnr - 1) IDU-ptnr-positive 1
+  ]
+  [while [ind < num-IDU-ptnr]
+    [if random-float 1 <= IDU-sharing-prevalence
+      [set IDU-ptnr-positive replace-item ind IDU-ptnr-positive 1]
+      set ind ind + 1
+    ]
+  ]
+    
+  
+end
+
+to  setup-trans-initial-ppl-IDU  
+  ;;;;;;;;;;needle sharing
+  let num-needles (random-float 1 * (num-needles-max - num-needles-min) + num-needles-min) / time-unit
+  let needles-shared 0
+  
+  ifelse needle-sharing? ;; if sharing needles with others
+  [set needles-shared num-needles * percent-needles-shared];; x% of needles shared 
+  [set needles-shared 0]
+  
+  let trans-needle trans-rate-needle
+  if stage = 1 
+  [set trans-needle trans-rate-needle * 8.1]
+  if stage = 6 
+  [set trans-needle trans-rate-needle * reduction-ART-needles]
+  if stage >= 3
+  [set needles-shared needles-shared * (1 - reduction-aware-needles)]
+  
+  let ind 0
+  let num-IDU-ptnr-shared 0
+  while [ind < length (IDU-ptnr-positive)]
+  [if random-float 1 <= prob-ptnr-sharing
+    [set num-IDU-ptnr-shared num-IDU-ptnr-shared + 1
+      set IDU-ptnr-shared replace-item ind IDU-ptnr-shared 1]
+    set ind ind + 1
+  ]
+  
+  let needles-shared-per-ptnr 0
+  if num-IDU-ptnr-shared > 0
+  [set needles-shared-per-ptnr round (needles-shared / num-IDU-ptnr-shared)]
+  
+  ;print "needles shared per ptnr is " 
+  ;print needles-shared-per-ptnr
+  
+  set ind 0
+  while [ind < length (IDU-ptnr-positive)]
+  [if item ind IDU-ptnr-shared = 1 and item ind IDU-ptnr-positive = 0
+    [if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles-shared-per-ptnr)
+      [set num-trans-Needle num-trans-Needle + 1]
+    ]
+    set ind ind + 1
+  ]
+  
+end
+
+;; This is the Bernoulli model for estimating transmission for those in acute phase 
+to  setup-trans-IDU-acute [week]
+  
+  let adjust-time 4.33 ;; for weekly transmissions instead of month  
+  let acute-rate-increase item (week - 1) [8.1 8.1 8.1 8.1 8.1 8.1 8.1 6.75 5.4 4.05 2.7 1.35];; higher transmission in acute stage
+  ifelse sex = 6
+  ; [ set acute-rate-increase item (week - 1) [12.0  12  12.0  12.0  12     12   12   12  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
+  [set acute-rate-increase item (week - 1) [12.0 12.0 12.0 12.0 11.4 9.2 5.8 1.5 1.0 1.0 1.0 1.0]] ;; MSM: higher transmission in acute stage
+  ;[ set acute-rate-increase item (week - 1) [1.0  8.5  12.0  12.0  11.4  9.2  5.8  1.5  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
+  [set acute-rate-increase item (week - 1) [1.0 6.0 8.5 8.5 8.1 6.5 4.1 1.1 1.0 1.0 1.0 1.0]];; HET: higher transmission in acute stage
+  
+  ;;;;;;;;;;needle sharing
+  let num-needles (random-float 1 * (num-needles-max - num-needles-min) + num-needles-min) / (time-unit * adjust-time)
+  ;print num-needles
+  let needles-shared 0
+  
+  ifelse needle-sharing? ;; x% share needles
+  [set needles-shared num-needles * percent-needles-shared];; x% of needles shared 
+  [set needles-shared 0]
+  
+  let trans-needle trans-rate-needle
+  if stage = 1 
+  [set trans-needle trans-rate-needle * acute-rate-increase]
+  if stage = 6 
+  [set trans-needle trans-rate-needle * reduction-ART-needles]
+  
+  if stage >= 3
+  [set needles-shared needles-shared * (1 - reduction-aware-needles)]
+  
+  let ind 0
+  let num-ptnr-shared 0  
+  while [ind < length (IDU-ptnr-positive)]
+  [if random-float 1 <= prob-ptnr-sharing
+    [set num-ptnr-shared num-ptnr-shared + 1
+      set IDU-ptnr-shared replace-item ind IDU-ptnr-shared 1]
+    set ind ind + 1
+  ]
+  
+  let needles-shared-per-ptnr 0
+  if num-ptnr-shared > 0
+  [set needles-shared-per-ptnr round (needles-shared / num-ptnr-shared)]
+  ;print needles-shared-per-ptnr
+  
+  set ind 0
+  while [ind < length (IDU-ptnr-positive)]
+  [if item ind IDU-ptnr-shared = 1 and item ind IDU-ptnr-positive = 0
+    [if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles-shared-per-ptnr)
+      [set num-trans-Needle num-trans-Needle + 1]
+    ]
+    set ind ind + 1
+  ]
+  
+  ;print num-trans-Needle
+  
+end
+
+;; maintaing proportion of individuals in concurrent partnerships

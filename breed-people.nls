@@ -64,18 +64,21 @@ people-own [
   
   
   index?
-  sexual?
   ; concurrency
   in-concurrency
   mix?
   bi-sexual?
+  sexual-Transmission?
   
+  ; IDU partners related
   
-  
+  IDU-ptnr-positive
+  IDU-ptnr-shared
+  num-IDU-ptnr
+  needle-sharing?
   
   non-AIDS-death
   quarter-nonAIDS-death
-  
   
   CD4-at-care
   CD4-to-start-ART ;; set CD4 count at which ART should start
@@ -87,13 +90,13 @@ people-own [
   regimen2-dur
   regimen3-dur
   regimen4-dur 
-  sexual-Transmission?
   
   infected-previous-quarter?
   infected?
   aware-previous-quarter?
   aware?
   total-regimen
+  dropOut?
   prev-total-regimen
   on-treatment?
   prev-on-treatment?
@@ -163,8 +166,7 @@ people-own [
   no-life-lost-from-infection?
   
   ; sum-disc-life-with-HIV 
-  ; sum-disc-life-no-HIV 
-  
+  ; sum-disc-life-no-HIV   
   
   disc-life-lost-to-infection 
   disc-QALYs-lost
@@ -186,30 +188,28 @@ people-own [
   care-service-cost 
   regimen-cost-quarter
   oi-cost-quarter
+  
+  count-casuals
 ]
 
 
-
-
-
-to set-infected-variables  
+to set-infected-variables
+  
   set infected-2013-2022?  false
   
-  set  acute-stg-length  0
+  set acute-stg-length  0
   ; set color red 
   
   set trans-year ceiling((ticks - sim-dry-run) / time-unit)
   
-  
-  
   ; set-next-test ;; WAS using this if people tested based on frequency of test instead of saying diagnosed people such that 20% are unaware
   
-  ifelse random-float 100 <= percent-IDU-transmission
-    [set sexual-Transmission? false]
-    [set sexual-Transmission? true]
+  ;ifelse random-float 100 <= percent-IDU-transmission
+  ;  [set sexual-Transmission? false]
+  ;  [set sexual-Transmission? true]
   ;print sexual-Transmission? 
   
-  if sex >= 4 [ set sexual-Transmission? false]
+  ;if sex >= 4 [set sexual-Transmission? false]
   
   
   ;;SET INTIAL VALUES OF SIMULATION VARIABLES: values on first quarter of infection
@@ -229,6 +229,7 @@ to set-infected-variables
   set aware? false
   set prev-total-regimen 0
   set total-regimen 0
+  set dropOut? false
   set prev-prev-on-treatment? false
   set prev-on-treatment? false
   set on-treatment? false
@@ -296,28 +297,29 @@ to set-infected-variables
   set util-cost 0 
   set test-cost 0
   set care-service-cost 0
-  set  regimen-cost-quarter 0
+  set regimen-cost-quarter 0
   set oi-cost-quarter 0
   
   ; set yearly-cost [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]  
   
   set discount-life-if-no-HIV 0
   set-discount-life-if-no-HIV 
+  
 end
 
-
-
-
 to set-discount-life-if-no-HIV
+  
   let i ticks
   repeat non-AIDS-death * 12 / time-unit
-  [ set i i + 1
+  [set i i + 1
     let discount-rate-factor-global (1 + discount-rate) ^ floor((i - t-start - 1) / time-unit)
     set discount-life-if-no-HIV (discount-life-if-no-HIV + (1 / discount-rate-factor-global))
   ]
+  
 end
 
 to set-testing-variables
+  
   set aware? true
   set age-Diag age
   set stage 3
@@ -344,10 +346,10 @@ to set-testing-variables
     ]
   ;print CD4-at-care
   if CD4-diagnosis < CD4-at-care
-    [set CD4-at-care CD4-diagnosis]
+  [set CD4-at-care CD4-diagnosis]
   set CD4-to-start-ART CD4-at-care
   if CD4-to-start-ART > CD4-start-ART-guideline
-    [set CD4-to-start-ART CD4-start-ART-guideline ]
+  [set CD4-to-start-ART CD4-start-ART-guideline]
   ;      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 end
@@ -355,35 +357,32 @@ end
 to set-ART-variables     
   ;;determine initial suppression and duration on the regimens;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
   ifelse CD4-to-start-ART <= 50
-    [ set initial-suppression-prob (item 0 probability-initial-suppression)]
+    [set initial-suppression-prob (item 0 probability-initial-suppression)]
     [ifelse  CD4-to-start-ART <= 200
-      [ set initial-suppression-prob (item 1 probability-initial-suppression)]
-      [ set initial-suppression-prob (item 2 probability-initial-suppression)]
+      [set initial-suppression-prob (item 1 probability-initial-suppression)]
+      [set initial-suppression-prob (item 2 probability-initial-suppression)]
     ]
   
   
   set rate-viral-rebound []
   
-  if CD4-to-start-ART  < 100 
-    [ set rate-viral-rebound lput (0.05 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+  if CD4-to-start-ART < 100 
+    [set rate-viral-rebound lput (0.05) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
     ]
   
-  if CD4-to-start-ART  >= 100 and CD4-to-start-ART  < 200
-    [ set rate-viral-rebound lput (0.025 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+  if CD4-to-start-ART >= 100 and CD4-to-start-ART  < 200
+    [set rate-viral-rebound lput (0.025) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
     ]
   
-  if CD4-to-start-ART  >= 200 and CD4-to-start-ART  < 300
-    [
-      set rate-viral-rebound lput (0.018 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+  if CD4-to-start-ART >= 200 and CD4-to-start-ART  < 300
+    [set rate-viral-rebound lput (0.018) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
     ]
   
-  if CD4-to-start-ART  >= 300 and CD4-to-start-ART  < 400
-    [
-      set rate-viral-rebound lput (0.015 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+  if CD4-to-start-ART >= 300 and CD4-to-start-ART  < 400
+    [set rate-viral-rebound lput (0.015) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
     ]
-  if CD4-to-start-ART  >= 400 
-    [
-      set rate-viral-rebound lput (0.014 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+  if CD4-to-start-ART >= 400 
+    [set rate-viral-rebound lput (0.014) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
     ]
   ;      
   set rate-viral-rebound lput ((item 0 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
@@ -416,8 +415,7 @@ to set-ART-variables
   ; print regimen2-dur
   ; print regimen3-dur
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-  
+   
 end
 
 

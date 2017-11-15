@@ -1,205 +1,158 @@
 ;;This file handles the sexual behavior including bernoulli model. There are several commented numbers because of several differnet trials in sexual behavior data
 
-
 ;;assign initial partnership when a person gets infected
-to   set-initial-partnership
-  
+to set-initial-partnership  
   ;; a person can have 2 concurent partners at any time
-  set partner-array [0 0 ] ;; if has no partner = [0 0]; if one partner = [ 1 0] if two partners (concurrency) = [1 1]
-  set partner-length [0 0 ] ;; determines length of  current partners
+  set partner-array [0 0] ;; if has no partner = [0 0]; if one partner = [ 1 0] if two partners (concurrency) = [1 1]
+  set partner-length [0 0] ;; determines length of  current partners
   set partner-counter [0 0] ;; counter to track how long it has been in current partnership
   set partner-infected? [false false] ;; HIV status of the two partner
-   set counter-partner [0 0 0] ;; [main concurrent casual]
-  
+  set counter-partner [0 0 0] ;; [main concurrent casual]
   
   let ind 0  
   if num-partner > 0
-  [   
-  while [ind < length (partner-array) - 1]
+  [while [ind < length (partner-array) - 1]
     [ifelse random-float 1 < item (sex - 1) prop-concurrency;    Determine if concurrent partners
-      [ 
-        
-        
-         set partner-length replace-item 0 partner-length ((- ln (random-float 1) /  (num-partner)) *  time-unit) ;+ ((- ln (random-float 1) /  (num-partner)) *  time-unit))
+      [set partner-length replace-item 0 partner-length ((- ln(random-float 1) / (num-partner)) * time-unit) ;+ ((- ln (random-float 1) /  (num-partner)) *  time-unit))
         set partner-array replace-item 0 partner-array 1
         set counter-partner replace-item 0 counter-partner (item 0 counter-partner + 1)
-         let time ((- ln (random-float 1) /  (item (sex - 1) concurrency-lambda)) *  time-unit)
-         
-        
+        let time ((- ln(random-float 1) / (item (sex - 1) concurrency-lambda)) * time-unit)              
         set partner-array replace-item (ind + 1) partner-array 1
-            set counter-partner replace-item 1 counter-partner (item 1 counter-partner + 1)
-       
-        set partner-length replace-item (ind + 1) partner-length time
-       
+        set counter-partner replace-item 1 counter-partner (item 1 counter-partner + 1)     
+        set partner-length replace-item (ind + 1) partner-length time       
         set in-concurrency 1
       ]
-    
       [if random-float 1 < no-partner ;    Determine if break between parterships
-        [set partner-length replace-item 0 partner-length ((- ln (random-float 1) /  (num-partner)) *  time-unit)
+        [set partner-length replace-item 0 partner-length ((- ln(random-float 1) / (num-partner)) * time-unit)
           set partner-array replace-item 0 partner-array 1
-          set counter-partner replace-item 0 counter-partner (item 0 counter-partner + 1)]
-      set in-concurrency 0
+          set counter-partner replace-item 0 counter-partner (item 0 counter-partner + 1)
+        ]
+        set in-concurrency 0
       ]
     set ind ind + 1
     ]
   ]
   
-  
   set ind 0
   while [ind < length (partner-array)]
-    [if item ind partner-array = 1
-      [
-        ifelse stage >= 3 and random-float 1 <= serosorting ;; with certain probability known HIV person selects a partner who is also HIV+
+  [if item ind partner-array = 1
+    [ifelse stage >= 3 and random-float 1 <= serosorting ;; with certain probability known HIV person selects a partner who is also HIV+
+      [set partner-infected? replace-item ind partner-infected? true]
+      [set partner-infected? replace-item ind partner-infected? false
+        ;;new partner can be positive with probability equal to prevalence / total population size          
+        if random-float 1 < item (sex - 1) prevalence
         [set partner-infected? replace-item ind partner-infected? true]
-        [
-          set partner-infected? replace-item ind partner-infected? false
-          ;;new partner can be positive with probability equal to prevalence / total population size
-          
-          
-          if random-float 1 < item (sex - 1) prevalence
-            [
-              set partner-infected? replace-item ind partner-infected? true
-            ]
-        ]
-        
-      ]
-    set ind ind + 1
+      ]    
     ]
-  
-  
+    set ind ind + 1
+  ]
   
   set num-trans-One 0
   set num-trans-Two 0
   set num-trans-Casual 0
-  set num-trans-Needle 0
   
   set prev-num-trans 0
   set num-trans-incprev 0
   
   ;set-HIV-variables
   
-   ifelse random-float 1 <= 0.21 ;; proportion bisexual ;;
-      [set bi-sexual? true]
-      [set bi-sexual? false]
+  ifelse random-float 1 <= 0.21 ;; proportion bisexual ;;
+  [set bi-sexual? true]
+  [set bi-sexual? false]
+  
 end
 
 ;;setting sexual behavior which changes with age. So this procedure is called every time-unit 
 to set-num-partners
-  if age mod 1 = 0 ;; change with increase in age by 1
-  [
-    let i 0
-    let found 0
-    while [i < length (age-partner-dist) and found = 0]
-    [
-      if age <= item i age-partner-dist
-      [
-        set found 1
-        set num-partner (item ((sex - 1) * 11 + i) main-partners) - 1 ;; -1 because looking at length of partnership (i.e., considering have a partner and how long for another episode/partner)
-                                                                      ; set casual-partner item ((sex - 1) * 11 + i) casual-partners 
-        set no-partner item ((sex - 1) * 11 + i) no-partners 
-        ifelse sex >= 3 and random-float 1 <= prob-casual
-        [
-          ;;if casual partners only median 5, min 1, max 10
-          ifelse random-float 1 <= (prob-casual-only / prob-casual)
-          [
+
+  let i 0
+  let found 0
+  
+  while [i < length (age-partner-dist) and found = 0]
+  [if age <= item i age-partner-dist
+    [set found 1
+      set num-partner (item ((sex - 1) * 11 + i) main-partners) - 1 ;; -1 because looking at length of partnership (i.e., considering have a partner and how long for another episode/partner)
+                                                                    ; set casual-partner item ((sex - 1) * 11 + i) casual-partners 
+      set no-partner item ((sex - 1) * 11 + i) no-partners 
+      ifelse (sex = 3 or sex = 6) and random-float 1 <= prob-casual
+      [;;if casual partners only median 5, min 1, max 10
+        ifelse random-float 1 <= (prob-casual-only / prob-casual)
+        [ifelse random-float 1 <= 0.5
+          [set casual-partner 1 + random 5]
+          [;set casual-partner 6 + random 5
             ifelse random-float 1 <= 0.5
-            [
-              set casual-partner 1 + random 5
-            ]
-            [
-              ;set casual-partner 6 + random 5
-              ifelse random-float 1 <= 0.5
-              [set casual-partner 6 + random 3 ]
-              [set casual-partner 9 + random 2 ]
-            ]
-            
-            set num-partner 0
+            [set casual-partner 6 + random 3]
+            [set casual-partner 9 + random 2]
           ]
-          [
-            ;;if main + casaul median 2, min 0, max 6
-            ifelse random-float 1 <= 0.5
-            [
-              set casual-partner 0 + random 3
-            ]
-            [
-              ;set casual-partner 3 + random 4
-             ifelse random-float 1 <= 0.75
-              [set casual-partner 3 + random 2]
-              [set casual-partner 5 + random 2] 
-            ]
-            
-           ; set casual-partner (item i casual-partners)  + random-float ((item (i + length (age-partner-dist)) casual-partners) - item i casual-partners)
-          ]
+          set num-partner 0
         ]
-        [set casual-partner 0]
-         
+        [;;if main + casaul median 2, min 0, max 6
+          ifelse random-float 1 <= 0.5
+          [set casual-partner 0 + random 3]
+          [;set casual-partner 3 + random 4
+            ifelse random-float 1 <= 0.75
+            [set casual-partner 3 + random 2]
+            [set casual-partner 5 + random 2] 
+          ]
+          ; set casual-partner (item i casual-partners)  + random-float ((item (i + length (age-partner-dist)) casual-partners) - item i casual-partners)
+        ]
       ]
-      set i i + 1
-      
+      [set casual-partner 0]       
     ]
-    
- 
-    set protected-acts-unaware 0
-    set protected-acts-casual-unaware 0
-    set num-acts-yearly-upper 0
-    set num-acts-yearly-lower 0
-    set prob-anal-sex 0
-    set found  0
-    set i 0
-    let j  1 * length (age-sex-acts)
-    if sex =  1 ;; if HET female all others have values same as that for HET male
-    [set j 0 * length (age-sex-acts)]
-    while [i < length (age-sex-acts) and found = 0]
-    [
-      if age < item i age-sex-acts 
-      [
-        set found 1
-        set num-acts-yearly-upper (item (i + j)   num-sex-acts-upper) 
-        set num-acts-yearly-lower (item (i + j)   num-sex-acts-lower) 
-        set prob-anal-sex (item (i + j ) prop-anal-acts-HET)
-        set protected-acts-unaware (item (i + j) condom-use-HET)
-        set protected-acts-casual-unaware (item (i + 2 * length (age-sex-acts)) condom-use-HET )
-      ]
-      set i i + 1
+    set i i + 1    
+  ]
+  
+  set protected-acts-unaware 0
+  set protected-acts-casual-unaware 0
+  set num-acts-yearly-upper 0
+  set num-acts-yearly-lower 0
+  set prob-anal-sex 0
+  set found 0
+  set i 0
+  let j 1 * length (age-sex-acts)
+  
+  if sex =  1 ;; if HET female all others have values same as that for HET male
+  [set j 0 * length (age-sex-acts)]
+  
+  while [i < length (age-sex-acts) and found = 0]
+  [if age < item i age-sex-acts 
+    [set found 1
+      set num-acts-yearly-upper (item (i + j) num-sex-acts-upper) 
+      set num-acts-yearly-lower (item (i + j) num-sex-acts-lower) 
+      set prob-anal-sex (item (i + j ) prop-anal-acts-HET)
+      set protected-acts-unaware (item (i + j) condom-use-HET)
+      set protected-acts-casual-unaware (item (i + 2 * length (age-sex-acts)) condom-use-HET )
     ]
-    
-    
-    ;;if MSM 50% insertive and 50% receptive
-    if sex = 3 or sex = 6 
-    [set prob-anal-sex 0.5
-      
-     
-      
+    set i i + 1
+  ]
+  
+  ;;if MSM 50% insertive and 50% receptive
+  if sex = 3 or sex = 6 
+    [set prob-anal-sex 0.5    
       set i 0
       set found 0
+      
       while [i < length (age-condom-use-MSM) and found = 0]
-      [
-        if age < item i age-condom-use-MSM 
-        [
-          set found 1
+      [if age < item i age-condom-use-MSM 
+        [set found 1
           set protected-acts-unaware (item i  condom-use-MSM)
           set protected-acts-casual-unaware (item (i + length (age-condom-use-MSM)) condom-use-MSM )
         ]
         set i i + 1
-      ]
-      
-    ]
-    
-    ifelse sex = 3
-    [set serosorting  .15
-    ]
-    [set serosorting 0];0.1] ;;Probability of selecting partners with same status (infected partners with infected)
-    
+      ]     
   ]
   
+  ifelse sex = 3 or sex = 6
+  [set serosorting .15]
+  [set serosorting 0];0.1] ;;Probability of selecting partners with same status (infected partners with infected)    
+
 end
 
-
 ;; This is the Bernoulli model for estimating transmission for those in non-acute phase 
-to  setup-trans-initial-ppl-HET-MSM
+to  setup-trans-initial-ppl-HET-MSM  
   
- let num-acts (num-acts-yearly-lower + random (num-acts-yearly-upper - num-acts-yearly-lower)) / time-unit
-  let num-acts-casual  1 + random 3;; sex acts with casual partner randomly 1 to 3
+  let num-acts (num-acts-yearly-lower + random (num-acts-yearly-upper - num-acts-yearly-lower)) / time-unit
+  let num-acts-casual 1 + random 3;; sex acts with casual partner randomly 1 to 3
 ;  let anal-condom-use 0.2 ;; HET anal sex use only
   let condom 0.8;; protection from condom ;80% reduction transmission probability
   let num-casual 0;
@@ -211,122 +164,108 @@ to  setup-trans-initial-ppl-HET-MSM
   let trans-rate item (sex - 1) (item (stage - 1) trans-rate-prob-stage)
   let trans-rate-anal item (sex - 1 + 6) (item (stage - 1) trans-rate-prob-stage)
   
-  if sex = 3 or sex = 6 ;; if MSM is bisexual 80% of time has sex with female 70% vaginal and 30% anal;; BY CALIBRATION
-    [
-      if bi-sexual? = true and random-float 1 <= BisexualMix
-      [
-        set mix? true
-        set trans-rate item (2 - 1) (item (stage - 1) trans-rate-prob-stage);; vaginal
-        set prob-anal-sex propAnal
-      ]
-      
-    ]
+  if sex = 3 ;; if MSM is bisexual 80% of time has sex with female 70% vaginal and 30% anal;; BY CALIBRATION
+  [if bi-sexual? = true and random-float 1 <= BisexualMix
+    [set mix? true
+      set trans-rate item (3 - 1) (item (stage - 1) trans-rate-prob-stage);; vaginal
+      set prob-anal-sex propAnal
+    ]   
+  ]
   
-  
-   let protected-acts 0
+  if sex = 6 ;; if MSM is bisexual 80% of time has sex with female 70% vaginal and 30% anal;; BY CALIBRATION
+  [if bi-sexual? = true and random-float 1 <= BisexualMix
+    [set mix? true
+      set trans-rate item (6 - 1) (item (stage - 1) trans-rate-prob-stage);; vaginal
+      set prob-anal-sex propAnal
+    ]   
+  ]
+ 
+  let protected-acts 0
   let protected-acts-casual 0
-   ifelse stage >= 3
-    [ifelse random-float 1 <= condom-100perc and sex = 3
-      [set protected-acts 1
-        set protected-acts-casual 1
-      ]
-      [set protected-acts 1 - (1 - protected-acts-unaware) * .47
-        set protected-acts-casual 1 - (1 - protected-acts-casual-unaware) * .47
-      ]
+  ifelse stage >= 3
+  [ifelse random-float 1 <= condom-100perc and (sex = 3 or sex = 6)
+    [set protected-acts 1
+      set protected-acts-casual 1
     ]
-    [set protected-acts protected-acts-unaware
-      set protected-acts-casual protected-acts-casual-unaware 
+    [set protected-acts 1 - (1 - protected-acts-unaware) * .47
+      set protected-acts-casual 1 - (1 - protected-acts-casual-unaware) * .47
     ]
+  ]
+  [set protected-acts protected-acts-unaware
+    set protected-acts-casual protected-acts-casual-unaware 
+  ]
   
   ;;;;;;;;;;needle sharing
-  let num-needles 200 / time-unit
-  
- 
-   let needles-shared 0;
-  if random-float 1 < 0.3 ;; 30% share needles
-  [set needles-shared 0.15 ];; 15% of needles shared 
-  
-  
-  let reduction-aware-needles 0.25
-  let reduction-ART-needles 0.5
-  let trans-needle trans-rate-needle
-  if stage = 1 
-  [set trans-needle trans-rate-needle * 8.1]
-  if stage = 6 
-  [set trans-needle trans-rate-needle * reduction-ART-needles]
-  
-  let num-shared needles-shared *  num-needles
-  if stage >= 3
-  [set num-shared needles-shared *  num-needles * (1 - reduction-aware-needles)]
+;  let num-needles (random-float 1 * (num-needles-max - num-needles-min) + num-needles-min) / time-unit
+;
+;  let needles-shared 0;
+;  if random-float 1 < 0.3 ;; 30% share needles
+;  [set needles-shared 0.15 ];; 15% of needles shared 
+;  
+;  let trans-needle trans-rate-needle
+;  if stage = 1 
+;  [set trans-needle trans-rate-needle * 8.1]
+;  if stage = 6 
+;  [set trans-needle trans-rate-needle * reduction-ART-needles]
+;  
+;  let num-shared needles-shared *  num-needles
+;  if stage >= 3
+;  [set num-shared needles-shared *  num-needles * (1 - reduction-aware-needles)]
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-    ;;modeling casual transmissions
+  ;;modeling casual transmissions
   let i 1
   set num-casual floor (casual-partner / time-unit) 
-    if random-float 1 <= ((casual-partner mod time-unit) / time-unit)
-     [set num-casual num-casual + 1 ]
-    
+  if random-float 1 <= ((casual-partner mod time-unit) / time-unit)
+  [set num-casual num-casual + 1]
+  
   set counter-partner replace-item 2 counter-partner (item 2 counter-partner + num-casual)
  ; if stage >= 3 
   ;  [set num casual-partner * (1 - serosorting) / time-unit] ;; if aware with probability select partners who are also positive
   
  ;;to estimate proportion of casual sex acts
-    if ticks > sim-dry-run + time-unit * 15
-    [  
-      if sex = 3 
-      [ set numActsCasualMSM numActsCasualMSM + num-acts-casual * num-casual]
-    ]
+  if ticks > sim-dry-run + time-unit * dry-run
+  [if sex = 3 or sex = 6
+    [set numActsCasualMSM numActsCasualMSM + num-acts-casual * num-casual]
+  ]
   
   while [i <= num-casual]
-    [
-      let person-positive false
-      
-      ;; probability casual partner positive
-      if stage >= 3
-      [if random-float 1 <= serosorting
-        [set person-positive true]
-      ]
-      if random-float 1 <= item (sex - 1) prevalence  ;; probability partner is not positive
+  [let person-positive false      
+    ;; probability casual partner positive
+    if stage >= 3
+    [if random-float 1 <= serosorting
       [set person-positive true]
-      
-      if person-positive = false
-      [set casualHIV casualHIV + 1]
-      
-      if person-positive = false
-        [
-          ;% reduction in transmission due to PrEP
-          let prep-red 1; 
-          if ticks > sim-dry-run + time-unit * 24
-          [
-            if (aware? and random-float 1 < prep-cov-positive) or random-float 1 < prep-cov-casual 
-            [set prep-red (1 - prep-effectiveness)]
-          ]
-          
-          ; sexual
-          ifelse random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * (1 - protected-acts-casual))) * ((1 - (1 - condom) * trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * protected-acts-casual)) * ((1 - trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * (1 - protected-acts-casual))) *((1 - (1 - condom) * trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * protected-acts-casual))
-            [
-              
-              set num-trans-Casual num-trans-Casual + 1
-              
-              
-            ]
-            [
-              ;;needle sharing
-              if sex >= 4 and random-float 1 <= 1 - (item 3 prevalence + item 4 prevalence + item 5 prevalence)
-              [
-                let needles num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / time-unit))
-                if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
-                [  set num-trans-Needle num-trans-Needle + 1
-                  
-                ]
-              ]
-              
-            ]
-        ]
-      set i i + 1
     ]
-  
+    if random-float 1 <= item (sex - 1) prevalence  ;; probability partner is not positive
+    [set person-positive true]
+    
+    if person-positive = false
+    [set casualHIV casualHIV + 1]
+    
+    if person-positive = false
+    [;% reduction in transmission due to PrEP
+      let prep-red 1; 
+      if ticks > sim-dry-run + time-unit * 24
+      [if (aware? and random-float 1 < prep-cov-positive) or random-float 1 < prep-cov-casual 
+        [set prep-red (1 - prep-effectiveness)]
+      ]          
+      ; sexual
+      ifelse random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * (1 - protected-acts-casual))) * ((1 - (1 - condom) * trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * protected-acts-casual)) * ((1 - trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * (1 - protected-acts-casual))) *((1 - (1 - condom) * trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * protected-acts-casual))
+      [set num-trans-Casual num-trans-Casual + 1]
+      [;;needle sharing
+;              if sex >= 4 and random-float 1 <= 1 - (item 3 prevalence + item 4 prevalence + item 5 prevalence)
+;              [
+;                let needles num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / time-unit))
+;                if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
+;                [  set num-trans-Needle num-trans-Needle + 1
+;                  
+;                ]
+;              ]              
+      ]
+    ]
+    set i i + 1
+  ]  
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
@@ -335,26 +274,19 @@ to  setup-trans-initial-ppl-HET-MSM
   let index 0
    ;; determine if change in partnership
   while [index < length (partner-array)]
-  [
-    
-    if item index partner-counter  >= item index partner-length
-    [ ;;change partner
-      
+  [if item index partner-counter  >= item index partner-length
+    [;;change partner
       ifelse (index = 0 and random-float 1 < no-partner) and num-partner > 0;;start a new relationship if first partner ends ;;if concurrent partner ends do nothing as cincurrency is managed at population level
-      [ 
-        ;set length of new partner
+      [;set length of new partner
         set partner-array replace-item (index) partner-array 1
-        let time ((- ln (random-float 1) /  (num-partner)) *  time-unit)
-        
+        let time ((- ln (random-float 1) /  (num-partner)) *  time-unit)        
         set partner-length replace-item (index) partner-length time
         set counter-partner replace-item index counter-partner (item index counter-partner + 1)
       ]
-      [
-        set partner-array replace-item (index) partner-array 0
+      [set partner-array replace-item (index) partner-array 0
         set partner-length replace-item (index) partner-length 0
         if index = 1
-        [ set in-concurrency 0]
-        
+        [set in-concurrency 0]        
       ]
       
       set partner-counter replace-item index partner-counter 0
@@ -364,151 +296,118 @@ to  setup-trans-initial-ppl-HET-MSM
       
       [ifelse stage >= 3 and random-float 1 <= serosorting ;; with certain probability known HIV person selects a partner who is also HIV+
         [set partner-infected? replace-item index partner-infected? true]
-        [
-          set partner-infected? replace-item index partner-infected? false
-          ;;new partner can be positive with probability equal to prevalence / total population size
-          
-          
+        [set partner-infected? replace-item index partner-infected? false
+          ;;new partner can be positive with probability equal to prevalence / total population size         
           if random-float 1 < item (sex - 1) prevalence
-            [
-              set partner-infected? replace-item index partner-infected? true
-            ]
+            [set partner-infected? replace-item index partner-infected? true]
         ]
-      ]
-      
-    ]
-    
-    set index index + 1
-   
+      ]     
+    ]  
+    set index index + 1  
   ] 
   
+  
   ;;;;Table 3
-   if ticks > sim-dry-run + time-unit * 15 and sex = 3
-       [
-         ;;:::Table 3 numACTS
-         let actualNumACTs 0
-         if item 0 partner-array = 1 or item 1 partner-array = 1
-         [
-           let val (num-acts - num-acts-casual * num-casual)/ (item 0 partner-array + item 1 partner-array) 
-          if item 0 partner-array = 1 and  item 0 partner-infected? = false 
-           [set actualNumACTs val] 
-          if item 1 partner-array = 1 and  item 1 partner-infected? = false 
-           [set actualNumACTs actualNumACTs + val]
-         ]
-         if num-casual > 0
-         [set actualNumACTs actualNumACTs + casualHIV * num-acts-casual ];; NUmber of uninfected casuals X acts per casual
-               
-         
-         ifelse (age - age-at-infection) <= 0.09
-         [
-           if sex = 3 and (item 0 partner-array + item 1 partner-array +  num-casual) > 1  and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casualHIV > 0)
-           [let val actualNumACTs + item 0 numACTStable3
-             set numACTStable3 replace-item 0 numACTStable3 val]
-         ]
-         [
-           ;2.
-           if sex = 3 and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + num-casual) = 1  and item 0 partner-infected? = false
-           [let val actualNumACTs + item 1 numACTStable3
-             set numACTStable3 replace-item 1 numACTStable3 val]
-           
-           ;3.
-           if sex = 3 and num-casual = 1 and (item 0 partner-array + item 1 partner-array + num-casual) = 1 and casualHIV > 0
-           [let val actualNumACTs + item 2 numACTStable3
-             set numACTStable3 replace-item 2 numACTStable3 val]
-           
-           
-           ;4.
-           if sex = 3 and (item 0 partner-array + item 1 partner-array) = 2 and num-casual = 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false)
-           [let val actualNumACTs + item 3 numACTStable3
-             set numACTStable3 replace-item 3 numACTStable3 val]
-           
-           ;5.
-           if sex = 3 and num-casual > 1 and (item 0 partner-array + item 1 partner-array) = 0 and casualHIV > 0
-           [let val actualNumACTs + item 4 numACTStable3
-             set numACTStable3 replace-item 4 numACTStable3 val]
-           
-           ;6.
-           if sex = 3 and num-casual > 0 and (item 0 partner-array + item 1 partner-array) > 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casualHIV > 0)
-           [let val actualNumACTs + item 5 numACTStable3
-             set numACTStable3 replace-item 5 numACTStable3 val]
-         ]
-       ]  
+  if ticks > sim-dry-run + time-unit * dry-run and (sex = 3 or sex = 6)
+  [;;:::Table 3 numACTS
+    let actualNumACTs 0
+    if item 0 partner-array = 1 or item 1 partner-array = 1
+    [let val (num-acts - num-acts-casual * num-casual)/ (item 0 partner-array + item 1 partner-array) 
+      if item 0 partner-array = 1 and item 0 partner-infected? = false 
+      [set actualNumACTs val] 
+      if item 1 partner-array = 1 and item 1 partner-infected? = false 
+      [set actualNumACTs actualNumACTs + val]
+    ]
+    
+    if num-casual > 0
+    [set actualNumACTs actualNumACTs + casualHIV * num-acts-casual ];; NUmber of uninfected casuals X acts per casual
+    
+    ifelse (age - age-at-infection) <= 0.09
+    [if (sex = 3 or sex = 6) and (item 0 partner-array + item 1 partner-array +  num-casual) > 1  and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casualHIV > 0)
+      [let val actualNumACTs + item 0 numACTStable3
+        set numACTStable3 replace-item 0 numACTStable3 val]
+    ]
+    [;2.
+      if (sex = 3 or sex = 6) and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + num-casual) = 1  and item 0 partner-infected? = false
+      [let val actualNumACTs + item 1 numACTStable3
+        set numACTStable3 replace-item 1 numACTStable3 val]           
+      ;3.
+      if (sex = 3 or sex = 6) and num-casual = 1 and (item 0 partner-array + item 1 partner-array + num-casual) = 1 and casualHIV > 0
+      [let val actualNumACTs + item 2 numACTStable3
+        set numACTStable3 replace-item 2 numACTStable3 val]     
+      ;4.
+      if (sex = 3 or sex = 6) and (item 0 partner-array + item 1 partner-array) = 2 and num-casual = 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false)
+      [let val actualNumACTs + item 3 numACTStable3
+        set numACTStable3 replace-item 3 numACTStable3 val]          
+      ;5.
+      if (sex = 3 or sex = 6) and num-casual > 1 and (item 0 partner-array + item 1 partner-array) = 0 and casualHIV > 0
+      [let val actualNumACTs + item 4 numACTStable3
+        set numACTStable3 replace-item 4 numACTStable3 val]          
+      ;6.
+      if (sex = 3 or sex = 6) and num-casual > 0 and (item 0 partner-array + item 1 partner-array) > 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casualHIV > 0)
+      [let val actualNumACTs + item 5 numACTStable3
+        set numACTStable3 replace-item 5 numACTStable3 val]
+    ]
+  ]  
    ;;;;END TABLE 3 CALCS
   
  ;;update partnership length and generate transmissions
  
   set index 0
   while [index < length (partner-array)]
-  [  
-        
-    if item index partner-array  = 1 
-      [set partner-counter replace-item index partner-counter  (item index partner-counter  + 1)
-        
-       if ticks > sim-dry-run + time-unit * 15
-       [
-         if sex < 3
-         [ 
-           ifelse index = 0 and item 1 partner-array  = 0 ;only main partner
-           [set  numActsMainHET numActsMainHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-           [set  numActsConHET numActsConHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-         ]
-         
-         if sex = 3
-         [ 
-           ifelse index = 0 and item 1 partner-array  = 0 and num-casual = 0 ;only main partner
-           [set  numActsMainMSM numActsMainMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-           [set  numActsConMSM numActsConMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-         ]  
-         
+  [if item index partner-array  = 1 
+    [set partner-counter replace-item index partner-counter  (item index partner-counter  + 1)
+      if ticks > sim-dry-run + time-unit * dry-run
+      [if sex = 1 or sex = 2 or sex = 4 or sex = 5
+        [ifelse index = 0 and item 1 partner-array  = 0 ;only main partner
+          [set numActsMainHET numActsMainHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
+          [set numActsConHET numActsConHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
         ]
+        
+        if sex = 3 or sex = 6
+          [ifelse index = 0 and item 1 partner-array  = 0 and num-casual = 0 ;only main partner
+            [set numActsMainMSM numActsMainMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
+            [set numActsConMSM numActsConMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
+        ]          
+      ]      
       
-       
-        if item index partner-infected? = false ;AND index < 2 ;; model transmission only if partner of index person  and is negative
-        [ let num-s (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )
-         
-          ;% reduction in transmission due to PrEP
-          let prep-red 1; 
-          if ticks > sim-dry-run + time-unit * 24
-          [
-            if (aware? and random-float 1 < prep-cov-positive) or (index = 1 and random-float 1 < prep-cov-concurrent )
-            [set prep-red (1 - prep-effectiveness)]
-          ]
-          
-           ;;sexual
-          if random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * (1 - protected-acts))) * ((1 - (1 - condom) * trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * protected-acts)) * ((1 - trans-rate-anal  * prep-red) ^ (num-s * prob-anal-sex * (1 - protected-acts))) *((1 - (1 - condom) * trans-rate-anal  * prep-red) ^ (num-s * prob-anal-sex * protected-acts))
-            [  set partner-infected? replace-item index partner-infected? true
-              ;set prev-num-trans num-trans
-              ifelse index = 0
-              [set num-trans-One 1]
-              [set num-trans-Two 1]
-            ]
-          
-          ;;needle sharing
-          if sex >= 4 and item index partner-infected? = false 
-          [  
-            let needles (num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / time-unit)))
-            if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
-            [  set partner-infected? replace-item index partner-infected? true
-               ifelse index = 0
-              [set num-trans-One 1]
-              [set num-trans-Two 1]
-            ]
-          ]
-          
-        ]
-        
-      ]
-    
+      if item index partner-infected? = false ;AND index < 2 ;; model transmission only if partner of index person  and is negative
+      [let num-s (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )          
+        ;% reduction in transmission due to PrEP
+        let prep-red 1; 
+        if ticks > sim-dry-run + time-unit * 24
+        [if (aware? and random-float 1 < prep-cov-positive) or (index = 1 and random-float 1 < prep-cov-concurrent )
+          [set prep-red (1 - prep-effectiveness)]
+        ]          
+        ;;sexual
+        if random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * (1 - protected-acts))) * ((1 - (1 - condom) * trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * protected-acts)) * ((1 - trans-rate-anal  * prep-red) ^ (num-s * prob-anal-sex * (1 - protected-acts))) *((1 - (1 - condom) * trans-rate-anal  * prep-red) ^ (num-s * prob-anal-sex * protected-acts))
+        [set partner-infected? replace-item index partner-infected? true
+          ;set prev-num-trans num-trans
+          ifelse index = 0
+          [set num-trans-One 1]
+          [set num-trans-Two 1]
+        ]          
+;          ;;needle sharing
+;          if sex >= 4 and item index partner-infected? = false 
+;          [  
+;            let needles (num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / time-unit)))
+;            if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
+;            [  set partner-infected? replace-item index partner-infected? true
+;               ifelse index = 0
+;              [set num-trans-One 1]
+;              [set num-trans-Two 1]
+;            ]
+        ;          ]          
+      ]        
+    ]    
     set index index + 1
-    
-    
   ]
  
 end
 
-
 ;; This is the Bernoulli model for estimating transmission for those in acute phase 
 to  setup-trans-acute [week]
+  
   let adjust-time 4.33 ;; for weekly transmissions instead of month
   
                        ;; number sex acts per week 
@@ -521,72 +420,74 @@ to  setup-trans-acute [week]
   
   let num-acts-casual 1 + random 3;; sex acts with casual partner randomly 1 to 3 
   let condom 0.8 ;; protection from condom ;80% reduction transmission probability
-   let num-casual 0;
+  let num-casual 0;
   let casualHIV 0;
 
   set mix? false
   
-    let acute-rate-increase item (week - 1) [8.1 8.1 8.1 8.1 8.1 8.1 8.1 6.75  5.4  4.05  2.7  1.35];; higher transmission in acute stage
+  let acute-rate-increase item (week - 1) [8.1 8.1 8.1 8.1 8.1 8.1 8.1 6.75  5.4  4.05  2.7  1.35];; higher transmission in acute stage
   ifelse sex = 3 or sex = 6
  ; [ set acute-rate-increase item (week - 1) [12.0  12  12.0  12.0  12     12   12   12  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
-  [ set acute-rate-increase item (week - 1) [12.0  12  12.0  12.0  11.4  9.2  5.8  1.5  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
+  [set acute-rate-increase item (week - 1) [12.0 12.0 12.0 12.0 11.4 9.2 5.8 1.5 1.0 1.0 1.0 1.0]] ;; MSM: higher transmission in acute stage
   ;[ set acute-rate-increase item (week - 1) [1.0  8.5  12.0  12.0  11.4  9.2  5.8  1.5  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
-  [set acute-rate-increase item (week - 1) [1.0  6.0  8.5  8.5  8.1  6.5  4.1  1.1  1.0  1.0  1.0  1]];; HET: higher transmission in acute stage
+  [set acute-rate-increase item (week - 1) [1.0 6.0 8.5 8.5 8.1 6.5 4.1 1.1 1.0 1.0 1.0 1.0]];; HET: higher transmission in acute stage
 
   let counter-add  1 / 4 ;; each week updates length of partnership as 0.25 weeks ;; added only for acute phase
   
                          ;; changing acute rate based on week of infection
   let trans-rate ((item (sex - 1) (item (stage - 1) trans-rate-prob-stage)) * acute-rate-increase) / 8.1 
   let trans-rate-anal ((item (sex - 1 + 6) (item (stage - 1) trans-rate-prob-stage)) * acute-rate-increase) / 8.1 
-  if sex = 3 or sex = 6 ;;if MSM is bisexual 70% of time has sex with female 50% vaginal and 50% anal
-    [
-      if bi-sexual? = true and random-float 1 <= BisexualMix
-      [
-        set mix? true
-        set trans-rate ((item (2 - 1) (item (stage - 1) trans-rate-prob-stage))  * acute-rate-increase) / 8.1 ;; vaginal
-        set prob-anal-sex propAnal
-      ]
-      
-    ]
   
+  if sex = 3 ;;if MSM is bisexual 70% of time has sex with female 50% vaginal and 50% anal
+    [if bi-sexual? = true and random-float 1 <= BisexualMix
+      [set mix? true
+        set trans-rate ((item (3 - 1) (item (stage - 1) trans-rate-prob-stage))  * acute-rate-increase) / 8.1 ;; vaginal
+        set prob-anal-sex propAnal
+      ]     
+    ] 
+  
+   if sex = 6 ;;if MSM is bisexual 70% of time has sex with female 50% vaginal and 50% anal
+    [if bi-sexual? = true and random-float 1 <= BisexualMix
+      [set mix? true
+        set trans-rate ((item (6 - 1) (item (stage - 1) trans-rate-prob-stage))  * acute-rate-increase) / 8.1 ;; vaginal
+        set prob-anal-sex propAnal
+      ]     
+    ] 
   
   let protected-acts 0
   let protected-acts-casual 0
   ifelse stage >= 3
-    [ifelse random-float 1 <= condom-100perc and sex = 3
-      [set protected-acts 1
-        set protected-acts-casual 1
-      ]
-      [set protected-acts 1 - (1 - protected-acts-unaware) * .47
-        set protected-acts-casual 1 - (1 - protected-acts-casual-unaware) * .47
-      ]
+  [ifelse random-float 1 <= condom-100perc and (sex = 3 or sex = 6)
+    [set protected-acts 1
+      set protected-acts-casual 1
     ]
-    [set protected-acts protected-acts-unaware
-      set protected-acts-casual protected-acts-casual-unaware 
+    [set protected-acts 1 - (1 - protected-acts-unaware) * .47
+      set protected-acts-casual 1 - (1 - protected-acts-casual-unaware) * .47
     ]
+  ]
+  [set protected-acts protected-acts-unaware
+    set protected-acts-casual protected-acts-casual-unaware 
+  ]
   ; set num-partners 1.1 * .43] ;; 53% lower in unprotected sex acts
   
   
   
   ;;;;;;;;;;needle sharing
-  let num-needles 200 / (time-unit * adjust-time)
-  
-  let needles-shared 0;
-  if random-float 1 < 0.3 ;; 30% share needles
-  [set needles-shared 0.15 ];; 15% of needles shared 
-  
-  
-  let reduction-aware-needles 0.25
-  let reduction-ART-needles 0.5
-  let trans-needle trans-rate-needle
-  if stage = 1 
-  [set trans-needle trans-rate-needle * acute-rate-increase]
-  if stage = 6 
-  [set trans-needle trans-rate-needle * reduction-ART-needles]
-  
-  let num-shared needles-shared *  num-needles
-  if stage >= 3
-  [set num-shared needles-shared *  num-needles * (1 - reduction-aware-needles)]
+;  let num-needles 200 / (time-unit * adjust-time)
+;  
+;  let needles-shared 0;
+;  if random-float 1 < 0.3 ;; 30% share needles
+;  [set needles-shared 0.15 ];; 15% of needles shared 
+;  
+;  let trans-needle trans-rate-needle
+;  if stage = 1 
+;  [set trans-needle trans-rate-needle * acute-rate-increase]
+;  if stage = 6 
+;  [set trans-needle trans-rate-needle * reduction-ART-needles]
+;  
+;  let num-shared needles-shared *  num-needles
+;  if stage >= 3
+;  [set num-shared needles-shared *  num-needles * (1 - reduction-aware-needles)]
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
@@ -594,295 +495,235 @@ to  setup-trans-acute [week]
 
   let i 1
   set num-casual floor (casual-partner / (time-unit  * adjust-time)) 
-    if random-float 1 <= ((casual-partner mod (time-unit  * adjust-time)) / (time-unit  * adjust-time))
-     [set num-casual num-casual + 1 ]
-    set counter-partner replace-item 2 counter-partner (item 2 counter-partner + num-casual)  
+  
+  if random-float 1 <= ((casual-partner mod (time-unit  * adjust-time)) / (time-unit  * adjust-time))
+  [set num-casual num-casual + 1]
+  
+  set counter-partner replace-item 2 counter-partner (item 2 counter-partner + num-casual)  
    
      ;;to estimate proportion of casual sex acts
-    if ticks > sim-dry-run + time-unit * 15
-    [  
-      if sex = 3 
-      [ set numActsCasualMSM numActsCasualMSM + num-acts-casual * num-casual]
-    ]
-  
+  if ticks > sim-dry-run + time-unit * dry-run
+  [if sex = 3 or sex = 6
+    [set numActsCasualMSM numActsCasualMSM + num-acts-casual * num-casual]
+  ] 
   
   while [i <= num-casual]
-    [
-      let person-positive false
-      
-      ;; probability casual partner positive
-      if stage >= 3
-      [if random-float 1 <= serosorting
-        [set person-positive true]
-      ]
-      if random-float 1 <=  item (sex - 1) prevalence  ;; probability partner is not positive
+  [let person-positive false    
+    ;; probability casual partner positive
+    if stage >= 3
+    [if random-float 1 <= serosorting
       [set person-positive true]
-      if person-positive = false
-      [set casual-HIV-status casual-HIV-status + 1
-        set casualHIV casualHIV + 1]
-      
-      if person-positive = false
-      
-        [
-          ;% reduction in transmission due to PrEP
-          let prep-red 1;
-          if ticks > sim-dry-run + time-unit * 24
-          [
-            if (aware? and random-float 1 < prep-cov-positive) or random-float 1 < prep-cov-casual 
-            [set prep-red (1 - prep-effectiveness)]
-          ]
-          ; sexual
-          ifelse random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * (1 - protected-acts-casual))) *((1 - (1 - condom) * trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * protected-acts-casual)) * ((1 - trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * (1 - protected-acts-casual))) *((1 - (1 - condom) * trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * protected-acts-casual))
-            [
-              
-              set num-trans-Casual num-trans-Casual + 1
-            ]
-            [
-              ;;needle sharing
-              if sex >= 4 and random-float 1 <= 1 - (item 3 prevalence + item 4 prevalence + item 5 prevalence)
-              [
-                let needles num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / (time-unit  * adjust-time)))
-                if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
-                [  set num-trans-Needle num-trans-Needle + 1
-                  
-                ]
-              ]
-              
-            ]
-        ]
-      set i i + 1
     ]
     
+    if random-float 1 <=  item (sex - 1) prevalence  ;; probability partner is not positive
+    [set person-positive true]
+    
+    if person-positive = false
+    [set casual-HIV-status casual-HIV-status + 1
+      set casualHIV casualHIV + 1]
       
+    if person-positive = false
+    [;% reduction in transmission due to PrEP
+      let prep-red 1;
+      if ticks > sim-dry-run + time-unit * 24
+      [if (aware? and random-float 1 < prep-cov-positive) or random-float 1 < prep-cov-casual 
+        [set prep-red (1 - prep-effectiveness)]
+      ]
+      ; sexual
+      ifelse random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * (1 - protected-acts-casual))) *((1 - (1 - condom) * trans-rate * prep-red) ^ (num-acts-casual * (1 - prob-anal-sex)  * protected-acts-casual)) * ((1 - trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * (1 - protected-acts-casual))) *((1 - (1 - condom) * trans-rate-anal * prep-red) ^ (num-acts-casual * prob-anal-sex * protected-acts-casual))
+      [set num-trans-Casual num-trans-Casual + 1]
+      [;;needle sharing
+;              if sex >= 4 and random-float 1 <= 1 - (item 3 prevalence + item 4 prevalence + item 5 prevalence)
+;              [
+;                let needles num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / (time-unit  * adjust-time)))
+;                if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
+;                [  set num-trans-Needle num-trans-Needle + 1
+;                  
+;                ]
+;              ]
+      ]
+    ]
+    set i i + 1
+  ]
+          
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
  ;;genrating main partner trasnmissions
   
   let index 0
   ;; determine if change in partnership
   while [index < length (partner-array)]
-  [
-    
-    if (item index partner-counter  >= item index partner-length) 
-    [ ;;change partner
+  [if (item index partner-counter  >= item index partner-length) 
+    [;;change partner
       ifelse (index = 0 and random-float 1 < no-partner) and num-partner > 0;;start a new relationship if first partner ends ;;if concurrent partner ends do nothing as cincurrency is managed at population level
-      [ 
-        ;set length of new partner
+      [;set length of new partner
         set partner-array replace-item (index) partner-array 1
         let time ((- ln (random-float 1) /  (num-partner)) *  time-unit)
-        
         set partner-length replace-item (index) partner-length time
-        
-         set counter-partner replace-item index counter-partner (item index counter-partner + 1)
+        set counter-partner replace-item index counter-partner (item index counter-partner + 1)
       ]
-      [
-        set partner-array replace-item (index) partner-array 0
+      [set partner-array replace-item (index) partner-array 0
         set partner-length replace-item (index) partner-length 0
-        if index = 1
-        [ set in-concurrency 0]
         
+        if index = 1
+        [set in-concurrency 0]        
       ]
       
       set partner-counter replace-item index partner-counter 0 ;; resetting counter for length of partnership
       
                                                                ;determine if partner is also positive 
-      if item index partner-array = 1
-      
+      if item index partner-array = 1      
       [ifelse stage >= 3 and random-float 1 <= serosorting ;; with certain probability known HIV person selects a partner who is also HIV+
         [set partner-infected? replace-item index partner-infected? true]
-        [
-          set partner-infected? replace-item index partner-infected? false
-          ;;new partner can be positive with probability equal to prevalence / total population size
-          
+        [set partner-infected? replace-item index partner-infected? false
+          ;;new partner can be positive with probability equal to prevalence / total population size         
           if random-float 1 < item (sex - 1) prevalence
-            [
-              set partner-infected? replace-item index partner-infected? true
-            ]
+          [set partner-infected? replace-item index partner-infected? true
+          ]
         ]
-      ]
-      
+      ]      
     ]
     set index index + 1
   ] 
-  
- 
+   
   ;;;Table 3
   ;;Kepp track of acts and casual partners in month (added up over 4 weeks in acute phase)
-  if ticks > sim-dry-run + time-unit * 15 and sex = 3
-     [
-           ;;:::Table 3 numACTS
-           
-                
-         
-         if item 0 partner-array = 1 or item 1 partner-array = 1
-         [
-           let val (num-acts - num-acts-casual * num-casual)/ (item 0 partner-array + item 1 partner-array) 
-          if item 0 partner-array = 1 and  monthly-partner1 = false 
-           [set acts-monthly-counter acts-monthly-counter + val] 
-          if item 1 partner-array = 1 and  monthly-partner2 = false 
-           [set acts-monthly-counter acts-monthly-counter + val]
-         ]
-         if num-casual > 0
-         [set acts-monthly-counter acts-monthly-counter + casualHIV * num-acts-casual ];; NUmber of uninfected casuals X acts per casual
-         set casuals-monthly-counter casuals-monthly-counter + num-casual
-     ] 
-   if ticks > sim-dry-run + time-unit * 15 and week = 3 and sex = 3
-     [          
-         
-         ifelse (age - age-at-infection) <= 0.09
-         [
-           if sex = 3 and (item 0 partner-array + item 1 partner-array +  casuals-monthly-counter) > 1  and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casual-HIV-status > 0)
-           [let val acts-monthly-counter + item 0 numACTStable3
-             set numACTStable3 replace-item 0 numACTStable3 val]
-         ]
-         [
-           ;2.
-           if sex = 3 and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + casuals-monthly-counter) = 1  and item 0 partner-infected? = false
-           [let val acts-monthly-counter + item 1 numACTStable3
-             set numACTStable3 replace-item 1 numACTStable3 val]
-           
-           ;3.
-           if sex = 3 and casuals-monthly-counter = 1 and (item 0 partner-array + item 1 partner-array + casuals-monthly-counter) = 1 and casual-HIV-status > 0
-           [let val acts-monthly-counter + item 2 numACTStable3
-             set numACTStable3 replace-item 2 numACTStable3 val]
-           
-           
-           ;4.
-           if sex = 3 and (item 0 partner-array + item 1 partner-array) = 2 and casuals-monthly-counter = 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false)
-           [let val acts-monthly-counter + item 3 numACTStable3
-             set numACTStable3 replace-item 3 numACTStable3 val]
-           
-           ;5.
-           if sex = 3 and casuals-monthly-counter > 1 and (item 0 partner-array + item 1 partner-array) = 0 and casual-HIV-status > 0
-           [let val acts-monthly-counter + item 4 numACTStable3
-             set numACTStable3 replace-item 4 numACTStable3 val]
-           
-           ;6.
-           if sex = 3 and casuals-monthly-counter > 0 and (item 0 partner-array + item 1 partner-array) > 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casual-HIV-status > 0)
-           [let val acts-monthly-counter + item 5 numACTStable3
-             set numACTStable3 replace-item 5 numACTStable3 val]
-         ]
-       ]  
-   ;;;;END TABLE 3 CALCS
-   
-   
+  if ticks > sim-dry-run + time-unit * dry-run and (sex = 3 or sex = 6)
+  [;;:::Table 3 numACTS
+    if item 0 partner-array = 1 or item 1 partner-array = 1
+    [let val (num-acts - num-acts-casual * num-casual)/ (item 0 partner-array + item 1 partner-array) 
+      
+      if item 0 partner-array = 1 and monthly-partner1 = false 
+      [set acts-monthly-counter acts-monthly-counter + val] 
+      
+      if item 1 partner-array = 1 and  monthly-partner2 = false 
+      [set acts-monthly-counter acts-monthly-counter + val]
+    ]
+    
+    if num-casual > 0
+    [set acts-monthly-counter acts-monthly-counter + casualHIV * num-acts-casual];; NUmber of uninfected casuals X acts per casual
+    set casuals-monthly-counter casuals-monthly-counter + num-casual
+  ]
+  
+  if ticks > sim-dry-run + time-unit * dry-run and week = 3 and (sex = 3 or sex = 6)
+  [ifelse (age - age-at-infection) <= 0.09
+    [if (sex = 3 or sex = 6) and (item 0 partner-array + item 1 partner-array +  casuals-monthly-counter) > 1  and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casual-HIV-status > 0)
+      [let val acts-monthly-counter + item 0 numACTStable3
+        set numACTStable3 replace-item 0 numACTStable3 val]
+    ]
+    [;2.
+      if (sex = 3 or sex = 6) and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + casuals-monthly-counter) = 1  and item 0 partner-infected? = false
+      [let val acts-monthly-counter + item 1 numACTStable3
+        set numACTStable3 replace-item 1 numACTStable3 val]
+      ;3.
+      if (sex = 3 or sex = 6) and casuals-monthly-counter = 1 and (item 0 partner-array + item 1 partner-array + casuals-monthly-counter) = 1 and casual-HIV-status > 0
+      [let val acts-monthly-counter + item 2 numACTStable3
+        set numACTStable3 replace-item 2 numACTStable3 val]
+      ;4.
+      if (sex = 3 or sex = 6) and (item 0 partner-array + item 1 partner-array) = 2 and casuals-monthly-counter = 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false)
+      [let val acts-monthly-counter + item 3 numACTStable3
+        set numACTStable3 replace-item 3 numACTStable3 val]
+      ;5.
+      if (sex = 3 or sex = 6) and casuals-monthly-counter > 1 and (item 0 partner-array + item 1 partner-array) = 0 and casual-HIV-status > 0
+      [let val acts-monthly-counter + item 4 numACTStable3
+        set numACTStable3 replace-item 4 numACTStable3 val]
+      ;6.
+      if (sex = 3 or sex = 6) and casuals-monthly-counter > 0 and (item 0 partner-array + item 1 partner-array) > 0 and (item 0 partner-infected? = false or item 1 partner-infected? = false or  casual-HIV-status > 0)
+      [let val acts-monthly-counter + item 5 numACTStable3
+        set numACTStable3 replace-item 5 numACTStable3 val]
+    ]
+  ]  
+  ;;;;END TABLE 3 CALCS
    
   ;;update partnership length and generate transmissions 
   set index 0
   while [index < length (partner-array)]
-  [ 
-    
-    if item index partner-array  = 1 
-      [set partner-counter replace-item index partner-counter  (item index partner-counter  + counter-add)
-       
-        ;; to estimate number of sex acts in each type of partnership 
-       if ticks > sim-dry-run + time-unit * 15
-       [
-         if sex < 3
-         [ 
-           ifelse index = 0 and item 1 partner-array  = 0 ;only main partner
-           [set  numActsMainHET numActsMainHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-           [set  numActsConHET numActsConHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-         ]
-         
-         if sex = 3
-         [ 
-           ifelse index = 0 and item 1 partner-array  = 0 and num-casual = 0 ;only main partner
-           [set  numActsMainMSM numActsMainMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-           [set  numActsConMSM numActsConMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
-         ]
-         
-         
-       ]
-       
-        
-        if item index partner-infected? = false ;AND index < 2 ;; model transmission only if partner of index person  and is negative
-        [
-          let num-s (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )
-          ; if random-float 1 <= 1 - concurrency
-          ; [
-          
-          ;% reduction in transmission due to PrEP
-          let prep-red 1; 
-          if ticks > sim-dry-run + time-unit * 24
-          [
-             if (aware? and random-float 1 < prep-cov-positive) or (index = 1 and random-float 1 < prep-cov-concurrent )
-            [set prep-red (1 - prep-effectiveness)]
-            
-          ]
-         
-          
-          if random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * (1 - protected-acts))) * ((1 - (1 - condom) * trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * protected-acts)) * ((1 - trans-rate-anal * prep-red) ^ (num-s * prob-anal-sex * (1 - protected-acts))) *((1 - (1 - condom) * trans-rate-anal * prep-red) ^ (num-s * prob-anal-sex * protected-acts))
-            [  set partner-infected? replace-item index partner-infected? true
-              ;set prev-num-trans num-trans
-              ifelse index = 0
-              [set num-trans-One num-trans-One + 1]
-              [set num-trans-Two num-trans-Two + 1]
-            ]
-          
-          ;;needle sharing
-          if sex >= 4 and item index partner-infected? = false 
-          [  
-            let needles num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / (time-unit  * adjust-time)))
-            if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
-            [  set partner-infected? replace-item index partner-infected? true
-             ifelse index = 0
-              [set num-trans-One 1]
-              [set num-trans-Two 1]
-            ]
-          ]
-          
+  [if item index partner-array  = 1 
+    [set partner-counter replace-item index partner-counter  (item index partner-counter  + counter-add)
+      ;; to estimate number of sex acts in each type of partnership 
+      if ticks > sim-dry-run + time-unit * dry-run
+      [if sex = 1 or sex = 2 or sex = 4 or sex = 5
+        [ifelse index = 0 and item 1 partner-array  = 0 ;only main partner
+          [set numActsMainHET numActsMainHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
+          [set numActsConHET numActsConHET + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
         ]
+         
+        if sex = 3 or sex = 6
+        [ifelse index = 0 and item 1 partner-array  = 0 and num-casual = 0 ;only main partner
+          [set numActsMainMSM numActsMainMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
+          [set numActsConMSM numActsConMSM + (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )]
+        ]                 
+      ]       
         
-      ]
-    
+      if item index partner-infected? = false ;AND index < 2 ;; model transmission only if partner of index person  and is negative
+      [let num-s (num-acts - (num-acts-casual * num-casual)) / (item 0 partner-array  + item 1 partner-array )
+        ; if random-float 1 <= 1 - concurrency
+        ; [
+        ;% reduction in transmission due to PrEP
+        let prep-red 1; 
+        
+        if ticks > sim-dry-run + time-unit * 24
+        [if (aware? and random-float 1 < prep-cov-positive) or (index = 1 and random-float 1 < prep-cov-concurrent )
+          [set prep-red (1 - prep-effectiveness)]          
+        ]        
+          
+        if random-float 1 <= 1 - ((1 - trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * (1 - protected-acts))) * ((1 - (1 - condom) * trans-rate * prep-red) ^ (num-s * (1 - prob-anal-sex) * protected-acts)) * ((1 - trans-rate-anal * prep-red) ^ (num-s * prob-anal-sex * (1 - protected-acts))) *((1 - (1 - condom) * trans-rate-anal * prep-red) ^ (num-s * prob-anal-sex * protected-acts))
+        [set partner-infected? replace-item index partner-infected? true
+          ;set prev-num-trans num-trans
+          ifelse index = 0
+          [set num-trans-One num-trans-One + 1]
+          [set num-trans-Two num-trans-Two + 1]
+        ]
+        ;;needle sharing
+;          if sex >= 4 and item index partner-infected? = false 
+;          [  
+;            let needles num-shared / (item 0 partner-array  + item 1 partner-array + (casual-partner / (time-unit  * adjust-time)))
+;            if random-float 1 <= 1 - ((1 - trans-rate-needle) ^ needles)
+;            [  set partner-infected? replace-item index partner-infected? true
+;             ifelse index = 0
+;              [set num-trans-One 1]
+;              [set num-trans-Two 1]
+;            ]
+;          ]          
+      ]        
+    ]    
     set index index + 1
   ]
   
-
-  
 end
-
 
 ;; maintaing proportion of individuals in concurrent partnerships
 
-to manage-concurrency
-  let i 1
-  repeat 6
-  [
-     let val (item (i - 1) prop-concurrency * count people with [infected? = true and dead = 0 and sex = i]) - ( count people with [infected? = true and dead = 0 and sex = i and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) > 1 ] )
-   ; let val (item (i - 1) prop-concurrency * count people with [infected? = true and dead = 0 and sex = i]) - ( count people with [infected? = true and dead = 0 and sex = i and in-concurrency = 1 ] )
+to manage-concurrency [i]
+  
+  ;let total-people people with [infected? = true and dead = 0]
+  let total-concurrent total-people-sex with [item 0 counter-partner + item 1 counter-partner + item 2 counter-partner > 1]
+  let total-avail total-people-sex with [item 0 counter-partner + item 1 counter-partner + item 2 counter-partner = 1]
+
+  let val floor (item (i - 1) prop-concurrency * count total-people-sex - count total-concurrent)
+    let temp-avail total-avail
+    let temp-num-avail count temp-avail
+    if val > temp-num-avail
+    [set val temp-num-avail]
     if val > 0
-    [
-      ask n-of (val) people with [infected? = true and dead = 0 and sex = i and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 ]
-     ; ask n-of (val) people with [infected? = true and dead = 0 and sex = i and in-concurrency = 0 ]
-        [
-          set in-concurrency 1
-           let time ((- ln (random-float 1) /  (item (sex - 1) concurrency-lambda)) *  time-unit)
-          set partner-length replace-item (1) partner-length time
-          set partner-array replace-item ( 1) partner-array 1
-          set counter-partner replace-item 1 counter-partner (item 1 counter-partner + 1)
-          ;  set time item 0 partner-length + ((- ln (random-float 1) /  (num-partner)) *  time-unit) 
-          ; set partner-length replace-item (0) partner-length time
-          set partner-counter replace-item 1 partner-counter 0 ;; resetting counter for length of partnership
-          
+    [ask n-of (val) temp-avail
+      ; ask n-of (val) people with [infected? = true and dead = 0 and sex = i and in-concurrency = 0 ]
+      [set in-concurrency 1
+        let time ((- ln (random-float 1) / (item (i - 1) concurrency-lambda)) * time-unit)
+        set partner-length replace-item 1 partner-length time
+        set partner-array replace-item 1 partner-array 1
+        set counter-partner replace-item 1 counter-partner (item 1 counter-partner + 1)
+        ;  set time item 0 partner-length + ((- ln (random-float 1) /  (num-partner)) *  time-unit) 
+        ; set partner-length replace-item (0) partner-length time
+        set partner-counter replace-item 1 partner-counter 0 ;; resetting counter for length of partnership       
                                                                ;determine if partner is also positive 
-          ifelse stage >= 3 and random-float 1 <= serosorting ;; with certain probability known HIV person selects a partner who is also HIV+
-          [set partner-infected? replace-item 1 partner-infected? true]
-          [
-            set partner-infected? replace-item 1 partner-infected? false
-            ;;new partner can be positive with probability equal to prevalence / total population size
-            
-            
-            if random-float 1 < item (sex - 1) prevalence
-            [
-              set partner-infected? replace-item 1 partner-infected? true
-            ]
-          ]
-        ]
+        ifelse (stage >= 3 and random-float 1 <= serosorting) or random-float 1 < item (i - 1) prevalence
+        ;; with certain probability known HIV person selects a partner who is also HIV+
+        ;;new partner can be positive with probability equal to prevalence / total population size
+        [set partner-infected? replace-item 1 partner-infected? true]
+        [set partner-infected? replace-item 1 partner-infected? false]
       ]
-      
-      
-      set i i + 1
     ]
+
+
 end
   
