@@ -1,10 +1,23 @@
 ;; THIS IS MAIN FILE. MOST procedure called from here
-__includes ["Data.nls" "Table3.nls" "testing-frequency.nls" "manage-age-group.nls" "manage-undiagnosed.nls" "set-dropout-care.nls" "initial-people-HET-MSM.nls" "initialize-transmissions.nls" "global-initialization.nls" "breed-people.nls" "update-simulation.nls" "concurrency-HET-MSM.nls"]
+__includes ["Data.nls" "Table3.nls" "testing-frequency.nls" "manage-age-group.nls" "manage-undiagnosed.nls" "set-dropout-care.nls"
+  "initial-people.nls" "initialize-transmissions.nls" "global-initialization.nls" "breed-people.nls" "update-simulation.nls"
+  "concurrency-HET-MSM.nls" "verify-plot.nls" "write-output.nls"]
 
-extensions [matrix csv]
+extensions [matrix csv profiler]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;INitial SETUP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; check runtime of each procedure
+to profile
+
+  profiler:start         ;; start profiling
+  repeat 1 [RunExperiment]       ;; run something you want to measure
+  profiler:stop          ;; stop profiling
+  print profiler:report  ;; view the results
+  profiler:reset         ;; clear the data
+
+end
 
 ;; initially settiing up x number of people
 to setup
@@ -12,241 +25,346 @@ to setup
   ;; __clear-all-and-reset-ticks should be replaced with clear-all at
   ;; the beginning of your setup procedure and reset-ticks at the end
   ;; of the procedure.)
-  __clear-all-and-reset-ticks  ;;clear all
-  setup-globals
-  count-num-HIV ;;function in 'global-initialization.nls': determines the prevalence of HIV in the simulating population
-  setup-initial-people-HET-MSM ;;function in 'initialize-people-HET-MSM.nls': matches the initial population to represent 2006 HIV
-                               ;check-setup ;; see next procedure below: used for verification
+
+  clear-ticks
+  clear-turtles
+  clear-patches
+  clear-drawing
+  clear-all-plots ;__clear-all-and-reset-ticks  ;;clear all
+
+  ;if goal = 1 [file-delete "results-concurrency-one.csv"]
+  ;setup-globals
+  ;count-num-HIV ;;function in 'global-initialization.nls': determines the prevalence of HIV in the simulating population
+
+  setup-initial-people ;;function in 'initialize-people-HET-MSM.nls': matches the initial population to represent 2006 HIV
+
+  ;check-setup ;; see next procedure below: used for verification
   setup-people ;; procedure below
                ;; next few setup are some of the plots.
                ;;However most of the results analysis has been conducted in excel files. (See ReadMe.doc in the folder)
-  setup-plot
-  setplot-het-stage
-  setplot-MSM-stage
-  setplot-CD4-diagnosis-HET
-  setplot-CD4-diagnosis-MSM
-  setplot-PLWH
+  ;setup-plot
+  ;setplot-het-stage
+  ;setplot-MSM-stage
+  ;setplot-CD4-diagnosis-HET
+  ;setplot-CD4-diagnosis-MSM
+  ;setplot-PLWH
 end
 
-to check-setup
-  let i 1
-  let stg-fem []
-  while [i <= 6]
-  [ set stg-fem lput  (count initial-people-HET-MSM with [infected? = true and stage = i and sex = 1 and dead = 0] /  count initial-people-HET-MSM with [infected? = true and sex = 1 and dead = 0]) stg-fem
-    set i i + 1]
-
-  set i 1
-  let stg-male []
-  while [i <= 6]
-  [ set stg-male lput  (count initial-people-HET-MSM with [infected? = true and stage = i and sex = 2 and dead = 0] /  count initial-people-HET-MSM with [infected? = true and sex = 2 and dead = 0]) stg-male
-    set i i + 1]
-
-  set i 1
-  let stg-MSM []
-  while [i <= 6]
-  [ set stg-MSM lput  (count initial-people-HET-MSM with [infected? = true and stage = i and sex = 3 and dead = 0] /  count initial-people-HET-MSM with [infected? = true and sex = 3 and dead = 0]) stg-MSM
-    set i i + 1]
-
-  print stg-fem
-  print stg-male
-  print stg-MSM
-end
-
+;;generating a number of dummy people who just stay in the simulation, just as a reserve of people to infect.
+;;When a new infection occurs later in the simulation, a dummy person is set as HIV-positive
 to setup-people
-  ;;generating a number of dummy people who just stay in the simulation, just as a reserve of people to infect.
-  ;;When a new infection occurs later in the simulation, a dummy person is set as HIV-positive
 
   create-people number-people * 0.3
-  [
-    set index-patient? false ;; the initial population are called
+  [set index-patient? false ;; the initial population are called
     set infected? false
   ]
+
 end
 
+to RunExperiment
 
+  set sim-dry-run 101 ;; for behavior
+  initialize-output
+  setup-globals
+
+  carefully [file-delete "results-partners.csv"] []
+  carefully [file-delete "results-PLWH-one.csv"] []
+  carefully [file-delete "results-new-infections-one.csv"] []
+;
+;  let _fname1 ""
+;  let _fname2 ""
+;
+;  if goal = 1
+;  [set _fname1 "results-PLWH-one.csv"
+;    set _fname2 "results-new-infections-one-csv"]
+;  if goal = 2
+;  [set _fname1 "results-PLWH-two.csv"
+;    set _fname2 "results-new-infections-two-csv"]
+;  if goal = 3
+;  [set _fname1 "results-PLWH-three.csv"
+;    set _fname2 "results-new-infections-three-csv"]
+;  if goal = 4
+;  [set _fname1 "results-PLWH-four.csv"
+;    set _fname2 "results-new-infections-four-csv"]
+;  if goal = 5
+;  [set _fname1 "results-PLWH-five.csv"
+;    set _fname2 "results-new-infections-five-csv"]
+;
+;  carefully [file-delete _fname1] []
+;  carefully [file-delete _fname2] []
+
+  while [tempRun < maxRun]
+  [setup
+    reset-ticks
+    repeat maxTicks [go]
+    set tempRun tempRun + 1
+    print (word "Completed run #:" tempRun)
+  ]
+
+  write-partners-header
+
+  write-PLWH-header
+
+  write-new-infections-header
+
+  write-transmission-rates
+
+End
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;BELOW PROCEDURE REPEATED EVERY TIME_UNIT
 to go
-
   ;; For the first 100 ticks (each tick is a month)
+
   if ticks <= 100
-  [
-    ;;updates prevalence of HIV among the different populations
-    count-num-HIV
-
-
-    ask initial-people-HET-MSM
-    [
-      if infected? = true
-      [
-
-        set num-trans-One 0 ;; count of transmission to main partner
-        set num-trans-Two 0 ;; count of transmission to concurrent partner
-        set num-trans-Casual 0 ;;count of transmission to casual partner
-        set num-trans-Needle 0  ;;count of transmission to needle sharing partner if IDU
-
-                                ;;matches initial populaion to 2006 PLWH in US
-        setup-trans-initial-ppl-HET-MSM
-
-      ]
-    ]
-
-    tick
-
-  ]
+  [first-100-ticks
+    tick]
 
   if ticks = 101
-  [
-    ;;set prevalence of HIV using number infected  divided by total population in US
-    ;;prevalence is updated as we project new infections for future years
-    count-num-HIV
-    ask initial-people-HET-MSM
-    [
-      if infected? = true
-      [
-        set num-trans-One 0
-        set num-trans-Two 0
-        set num-trans-Casual 0
-        set num-trans-Needle 0
+  [tick-101
+    tick]
 
+  set t-start sim-dry-run + time-unit * dry-run;; discounting to year 2006, change proportions in care cascade components from 2012 to 2015 ;; first 15 years keeping at 2008 levels as a dry run
 
-        ;; will convert breed "initial-people-HET-MSM" to breed "people".
-        ;;Changing breed just so it is easier to model. Will also assign test and care status to match 2006 population
-        ;;procedure in initial-people-HET-MSM.nls
-        set-HIV-variables-HET-MSM
-
-        set index-patient? true
-        ifelse stage < 3
-        [set-next-test] ;; procedure in  "testing-frequency.nls"]
-        [set next-test 0]
-
-        ;; resetting counter for partners
-        set counter-partner replace-item 0 counter-partner (item 0 partner-array)
-        set counter-partner replace-item 1 counter-partner (item 1 partner-array)
-        set counter-partner replace-item 2 counter-partner 0
-      ]
-    ]
-
-    tick
-  ]
-
-  set sim-dry-run 101 ;; for behavior
-  set t-start sim-dry-run + time-unit * 15;;;; discounting to year 2006
-
-                                          ;; change proportions in care cascade components from 2012 to 2015 ;; first 15 years keeping at 2008 levels as a dry run
   if ticks > sim-dry-run ;and ticks <= sim-dry-run + time-unit * 24;18 ;; 2006 to 2015 modeling;;
-    [
-      ifelse ticks <= sim-dry-run + time-unit * dry-run;; dry run for 15 years.
-                                                  ;;Since new people get infected every year prevalence changes but since 15 yeras is dry run we want to maintain 2006 prevalence
-      [let popsize count people with [infected? = true and dead = 0 ]
+  [;; first 15 years dry-run, keep prevalence the same as 2006
+    dry-run-keep-prevalence
+    set partners-per-month [0 0 0 0 0 0 0 0]
 
-        let factor  0.5; assuming 50% of population is high risk
-        set num-HET-FEM   (0.5 * (1 -  (0.02 + 0.012 + 0.018)) * popsize * factor * 100000 / 441 )
-        set num-HET-MEN  (0.5 * (1 - (0.02 + 0.012 + 0.018))  * popsize  * factor * 100000 / 441)
-        set num-MSM    ( 0.02 * ( 1 -  0.02) * popsize   * 100000 / 441) ;; assuming 2% of US population are MSM
-        set num-IDU-FEM   ( 0.012 * popsize *  100000 / 441)
-        set num-IDU-MEN   ( 0.018 * popsize  *  100000 / 441)
-        set num-IDU-MSM   (0.02 * 0.02 * popsize  *  100000 / 441)
-        count-num-HIV
-        ;; for 2012 prevalence per 100,000 is 573;; for 2008 it is 470;; 2006 is 441
-      ]
-      ;[
-        ;ifelse ticks < (sim-dry-run + time-unit * 38)
-        [update-stage-props (floor((ticks - sim-dry-run - dry-run * time-unit ) / time-unit))]
-       ; [update-stage-props (9)]
-      ;]
-;      [if ticks = sim-dry-run + time-unit * 17 + 1;; 2007 and 2008
-;        [update-stage-props];; changes cascade proportions. procedure in global-initialization.nls
-;      if ticks = sim-dry-run + time-unit * 20 + 1  ; 2008 to 2010 keep at 2008 levels
-;
-;        [update-stage-props-inter] ;;2011 to 2015];; changes cascade proportions. procedure in global-initialization.nls
-;
-;
-;      ];;
+    ;; estimating the prevalence of HIV in different risk groups;; look for this procedure in global-initialization.nls
+    count-num-HIV
+    ;; procedure in concurrency-HET-MSM.nls: updating number of partners with change in age
 
-
+    ask total-people with [age mod 1 = 0]
+    [set-num-partners ;;
     ]
 
+    ;; procedure in concurrency-HET-MSM.nls: managing proportion of individuals with concurrent partners
+    let i 1
+    repeat 6
+    [set total-people-sex total-people with [sex = i]
+      manage-concurrency i
+      set i i + 1
+    ]
 
-  if ticks > sim-dry-run
-  [
-    let partners-per-month [0 0 0 0 0 0 0 0]
-    count-num-HIV;; estimating the prevalence of HIV in different risk groups;; look for this procedure in global-initialization.nls
-
-
-    ask people  with [infected? = true and dead = 0]
-      [
-        set-num-partners ;; procedure in concurrency-HET-MSM.nls: updating number of partners with change in age.
-      ]
-
-    manage-concurrency ;; procedure in concurrency-HET-MSM.nls: managing proportion of individuals with concurrent partners
-
-    ask people with [dead  = 0 and infected? = true]
-    [
-      ;;monthly parameters
+    ;; procedure in update-simulation.nls. This is the disease progression model (PATH 1.0)
+    ask total-people
+    [;;monthly parameters
       set num-trans-One 0
       set num-trans-Two 0
       set num-trans-Casual 0
       set num-trans-Needle 0
-
-      update-simulation ;; procedure in update-simulation.nls. This is the disease progression model (PATH 1.0)
-
+      update-simulation
     ]
 
-    ;;managing proportion of individuals on cascade of care. They are procedures in manage-undiagnosed.nls
-    manage-undiag;; keeping unaware at 20%; determines people to diagnose
-    manage-no-care;;1)determine number of people to drop out of care (ART or noART) if more than required in care ; 2) determine # of people to add to care if more people not in care
-    manage-care-noART ;; if more than required 'in care no ART' move them to ART -suppressed
-    ;manage-ARTsuppressed;;1) if more peopl with ART-supressed than required move them to ART-unsuppressed; 2) if less people with ART-suppressed than required move them to ART-suppressed
-    ifelse   ticks >= (sim-dry-run + time-unit * (dry-run + 7))   ;year 2012 and future control no VLS according to times between rebound instead of using current proportions as some are due to lack of adherence. For future we want to assume 100% adherence
-    [manage-ART-drop0ut-post2012]
-    [manage-ART-drop0ut]
-    ;;in addition: 1) people when diagnosed are assigned probability they link to care within a month to 3; 2) people who drop-out of care are asigned when they come back to care based on CD4 count.
+    ;;1) people when diagnosed are assigned probability they link to care within a month to 3; 2) people who drop-out of care are asigned when they come back to care based on CD4 count.
+    set total-people people with [infected? = true and dead = 0]
+    manage-proportion-care
 
     ;;for individuals in acute phase infection cutting down to weekly time unit and estimating transmissions every week
-    ask people with [dead  = 0 and infected? = true and age - age-at-infection <= 0.26  ] ;; first 3 months of infection
-    [
-      if ticks > sim-dry-run + time-unit * 19 and ticks <= sim-dry-run + time-unit * 24 ;; individuals in acute phase are recently infected ones
+    acute-infection
+
+    ;; for individuals not in acute phase estimating tarnsmissions every month
+    non-acute-infection
+
+    ;;controlling for distribution of age at infection
+    if (ticks - sim-dry-run) mod 12 = 0
+    [manage-age-group]
+
+    ;;As trasnmissions occurred the dummy people from reserve (who were infected and in no way part of simulation)
+    ;; were taken and set as infected to denote the infected person. Here creating more people in reserve.
+    if (count people with [infected? = false]) <= 3 * number-people * 1 / 12
+    [setup-people]
+
+    ;; generating output every year. Since each tick is assumed a month we write outputs only every year
+    if (ticks - sim-dry-run) mod 12 = 0 and ticks <= (sim-dry-run + time-unit * num-year-trans) ;; generarte transmissions for num-year-trans years
+    [if ticks >= (sim-dry-run + time-unit * dry-run)
+      [;write-output
+        generate-partners
+        generate-PLWH
+        generate-new-infections
+      ];
+
+      if ticks = (sim-dry-run + time-unit * (dry-run + 5));year 2010
+      [set InititalINfections count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]]
+
+      if ticks = (sim-dry-run + time-unit * (dry-run + 15));year 2020
+      [set finalINfections count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
+        ;file-open "infectionsReduction.csv"
+        ;file-print (- finalINfections + InititalINfections) / InititalINfections
+        ;file-close
+      ]
+
+      set count-trans-by-stage [0 0 0 0 0 0] ;; resetting counters every year
+      set count-trans-by-stage-first-time [0 0 0 0 0 0]
+      set count-trans-by-stage-drop-out [0 0 0 0 0 0]
+      set count-trans-by-partner-type [0 0 0 0 0 0 0];;;; resetting counters year
+      set numACTStable3 [0 0 0 0 0 0]; resetting counters year
+      set numTranstable3 [0 0 0 0 0 0];  resetting counters year
+      set countNewDiagnosis [0 0 0 0 0 0];  resetting counters new diagnosis
+      ask people with [infected? = true]
+      [set counter-partner replace-item 0 counter-partner (item 0 partner-array)
+        set counter-partner replace-item 1 counter-partner (item 1 partner-array)
+        set counter-partner replace-item 2 counter-partner 0
+      ]
+      ;display-check
+    ]
+    tick
+  ]
+
+  if ticks > (sim-dry-run + time-unit * num-year-trans)
+  [stop]
+;  [;;NHAS goals see TRIP-May 9th 2012 talk
+;    if goal = 1
+;    [file-open "results-concurrency-one.csv"
+;      file-print""
+;      file-close
+;      stop]
+;    if goal = 2 [file-open "results-concurrency-two.csv"]
+;    if goal = 3 [file-open "results-concurrency-three.csv"]
+;    if goal = 4 [file-open "results-concurrency-four.csv"]
+;    if goal = 5 [file-open "results-concurrency-five.csv"]
+;  ]
+
+end
+;;END OF GO PROCUEDURE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; first 100 ticks, dry run
+to first-100-ticks
+  ;;updates prevalence of HIV among the different populations
+  count-num-HIV
+  ask initial-people with [infected? = true]
+    [set num-trans-One 0 ;; count of transmission to main partner
+      set num-trans-Two 0 ;; count of transmission to concurrent partner
+      set num-trans-Casual 0 ;;count of transmission to casual partner
+      set num-trans-Needle 0  ;;count of transmission to needle sharing partner if IDU
+                              ;;matches initial populaion to 2006 PLWH in US
+      setup-trans-initial-ppl-HET-MSM
+  ]
+
+end
+;; update at 101st tick
+to tick-101
+  ;;set prevalence of HIV using number infected divided by total population in US
+  ;;prevalence is updated as we project new infections for future years
+  count-num-HIV
+
+  ask initial-people with [infected? = true]
+  [set num-trans-One 0
+    set num-trans-Two 0
+    set num-trans-Casual 0
+    set num-trans-Needle 0
+    ;; will convert breed "initial-people-HET-MSM" to breed "people".
+    ;;Changing breed just so it is easier to model. Will also assign test and care status to match 2006 population
+    ;;procedure in initial-people-HET-MSM.nls
+    set-HIV-variables-HET-MSM
+    set index-patient? true
+    ifelse stage < 3
+    [set-next-test] ;; procedure in  "testing-frequency.nls"]
+    [set next-test 0]
+    ;; resetting counter for partners
+    set counter-partner replace-item 0 counter-partner (item 0 partner-array)
+    set counter-partner replace-item 1 counter-partner (item 1 partner-array)
+    set counter-partner replace-item 2 counter-partner 0
+  ]
+
+end
+
+to dry-run-keep-prevalence
+
+  ifelse ticks <= sim-dry-run + time-unit * dry-run;; dry run for 15 years, since new people get infected every year prevalence changes but since 15 yeras is dry run we want to maintain 2006 prevalence
+    [let popsize count people with [infected? = true and dead = 0]
+      let factor  0.5; assuming 50% of population is high risk
+      set num-HET-FEM (0.5 * (1 - (0.02 + 0.012 + 0.018)) * popsize * factor * 100000 / 441)
+      set num-HET-MEN (0.5 * (1 - (0.02 + 0.012 + 0.018)) * popsize * factor * 100000 / 441)
+      set num-MSM (0.02 * ( 1 - 0.02) * popsize * 100000 / 441) ;; assuming 2% of US population are MSM
+      set num-IDU-FEM (0.012 * popsize * 100000 / 441)
+      set num-IDU-MEN (0.018 * popsize * 100000 / 441)
+      set num-IDU-MSM (0.02 * 0.02 * popsize * 100000 / 441)
+      count-num-HIV
+      ;; for 2012 prevalence per 100,000 is 573;; for 2008 it is 470;; 2006 is 441
+    ]
+    ;[
+    ;ifelse ticks < (sim-dry-run + time-unit * 38)
+    [update-stage-props (floor((ticks - t-start) / time-unit))]
+    ;[update-stage-props (9)]
+    ;[if ticks = sim-dry-run + time-unit * 17 + 1;; 2007 and 2008
+    ;[update-stage-props];; changes cascade proportions. procedure in global-initialization.nls
+    ;if ticks = sim-dry-run + time-unit * 20 + 1  ; 2008 to 2010 keep at 2008 levels
+    ;[update-stage-props-inter] ;;2011 to 2015];; changes cascade proportions. procedure in global-initialization.nls
+    ;];;
+end
+
+to manage-proportion-care
+
+  let i 1
+  repeat 3
+  [set total-people-sex total-people with [sex = i]
+
+    manage-undiag i
+    manage-no-care i
+    manage-care-noART i
+
+    ifelse ticks >= (sim-dry-run + time-unit * (dry-run + 7)) ;year 2012 and future control no VLS according to times between rebound instead of using current proportions as some are due to lack of adherence. For future we want to assume 100% adherence
+    [manage-ART-drop0ut-post2012 i]
+    [manage-ART-drop0ut i]
+
+    set i i + 1
+  ]
+  ;;managing proportion of individuals on cascade of care. They are procedures in manage-undiagnosed.nls
+
+  ;manage-undiag;; keeping unaware at 20%; determines people to diagnose
+  ;manage-no-care;;1)determine number of people to drop out of care (ART or noART) if more than required in care ; 2) determine # of people to add to care if more people not in care
+  ;manage-care-noART ;; if more than required 'in care no ART' move them to ART -suppressed
+
+  ;manage-ARTsuppressed;;1) if more peopl with ART-supressed than required move them to ART-unsuppressed; 2) if less people with ART-suppressed than required move them to ART-suppressed
+
+  ;ifelse ticks >= (sim-dry-run + time-unit * (dry-run + 7)) ;year 2012 and future control no VLS according to times between rebound instead of using current proportions as some are due to lack of adherence. For future we want to assume 100% adherence
+  ;  [manage-ART-drop0ut-post2012]
+  ;  [manage-ART-drop0ut]
+
+end
+
+to acute-infection
+  ask total-people with [age - age-at-infection <= 0.26] ;; first 3 months of infection
+    [if ticks > sim-dry-run + time-unit * 19 and ticks <= sim-dry-run + time-unit * 24 ;; individuals in acute phase are recently infected ones
       [set infected-2013-2022? true];; keep track of those infected between 2011 and 2015 if set at between years 19 and 25 (name is misleading)
-
-
-                                    ;;determine months since infection. Used to model acute phase transmissions which varies weekly
+                                    ;; determine months since infection. Used to model acute phase transmissions which varies weekly
       let start-week 1
-      ifelse age - age-at-infection <= 0.09 ;; first month of infections
-        [set start-week 1]
-        [
-          ifelse age - age-at-infection <= 0.17 ;; 2nd month of infection
-          [set start-week 5]
-          [set start-week 9] ;; third month of infection
-        ]
 
-      let count-casuals item 2 counter-partner
+      ifelse age - age-at-infection <= 1 / 12 ;; first month of infections
+      [set start-week 1]
+      [ifelse age - age-at-infection <= 2 / 12 ;; 2nd month of infection
+        [set start-week 5]
+        [set start-week 9] ;; third month of infection
+      ]
+
+      set count-casuals item 2 counter-partner
+
       let i 0
-
       ;;;counters to track num acts during month when in acute phase
       set casuals-monthly-counter 0
       set acts-monthly-counter 0
+
       if item 0 partner-infected? = false
       [set monthly-partner1 false]
+
       if item 1 partner-infected? = false
       [set monthly-partner2 false]
+
       set casual-HIV-status 0
       ;;;end counters to track num acts during month when in acute phase
 
       while [i < 4]
-      [
-
-        setup-trans-acute start-week + i ;; procedure in concurrency-HET-MSM.nls
-                                         ;;Note that number transmissions across all weeks of month are added up in setup-trans-acute
+      [setup-trans-acute start-week + i; procedure in concurrency-HET-MSM.nls
+        ;; Note that number transmissions across all weeks of month are added up in setup-trans-acute
         set i i + 1
-
       ]
 
-      if sex = 3 ;; keep a check on number of partners in same month (proxy for concurrency)
-        [
-          let inter-val (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals))
-          set partners-per-month replace-item inter-val partners-per-month ( item inter-val partners-per-month + 1)
-        ]
+      if sex = 3;; keep a check on number of partners in same month (proxy for concurrency)
+      [let inter-val (item 0 partner-array + item 1 partner-array + (item 2 counter-partner - count-casuals))
+        set partners-per-month replace-item inter-val partners-per-month ( item inter-val partners-per-month + 1)
+      ]
 
       set number-transmissions num-trans-One + num-trans-Two + num-trans-Casual + num-trans-Needle
       set life-time-transmissions life-time-transmissions + number-transmissions
@@ -255,1323 +373,148 @@ to go
       ;;NOTE: NOT COUNTING BY RISK GROUP AS MIXING IS INVOLVED WHICH IS DETERMINED IN initialize-transmissions
       let val item (stage - 1) count-trans-by-stage + number-transmissions
       set count-trans-by-stage replace-item (stage - 1) count-trans-by-stage val
-
-
+      ifelse dropOut?
+      [set val item (stage - 1) count-trans-by-stage-drop-out + number-transmissions
+        set count-trans-by-stage-drop-out replace-item (stage - 1) count-trans-by-stage-drop-out val]
+      [set val item (stage - 1) count-trans-by-stage-first-time + number-transmissions
+        set count-trans-by-stage-first-time replace-item (stage - 1) count-trans-by-stage-first-time val]
       ;; count transmissions by partner type: 0= HET main to main(het has only main); 6 = HET main (main or concurrent)
       ; 1= MSM bisexula to female; 2 = MSM bisexual to MSM
-      ifelse sex <= 2
-      [
-        ifelse (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-          [ set val num-trans-One +  item 0 count-trans-by-partner-type
-            set count-trans-by-partner-type replace-item 0 count-trans-by-partner-type val]
-          [
-            set val num-trans-One + num-trans-Two + num-trans-Casual + item 6 count-trans-by-partner-type
-            set count-trans-by-partner-type replace-item 6 count-trans-by-partner-type val
-          ]
-
-      ]
-      [
-        if sex = 3 and bi-sexual? = true and mix? = true
-        [set val num-trans-One + num-trans-Two + num-trans-Casual + item 1 count-trans-by-partner-type
-          set count-trans-by-partner-type replace-item 1 count-trans-by-partner-type val]
-
-        if sex = 3 and bi-sexual? = true and mix? = false
-        [set val num-trans-One + num-trans-Two + num-trans-Casual + item 2 count-trans-by-partner-type
-          set count-trans-by-partner-type replace-item 2 count-trans-by-partner-type val]
-
-        ;; count transmissions by partner type: 3= MSM to  MSM (MSM has only 1 main);
-        ;4= MSM to MSM (MSM has 1 or 2 main may or maynot have casuals); 5= MSM to casual partners ;
-        if sex = 3
-          [
-            if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-            [ set val num-trans-One + num-trans-Two + item 3 count-trans-by-partner-type
-              set count-trans-by-partner-type replace-item 3 count-trans-by-partner-type val]
-
-            if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
-            [set val num-trans-One + num-trans-Two +  item 4 count-trans-by-partner-type
-              set count-trans-by-partner-type replace-item 4 count-trans-by-partner-type val]
-
-            set val num-trans-Casual + item 5 count-trans-by-partner-type
-            set count-trans-by-partner-type replace-item 5 count-trans-by-partner-type val
-          ]
-
-      ]
-
-      ;;;;;TABLE 3;;;
-      ;;;;;;;;;;;;;;;
-      ifelse (age - age-at-infection) <= 0.09
-        [
-          if sex = 3 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) > 1
-          [set val num-trans-One + num-trans-Two + num-trans-Casual + item 0 numTranstable3
-            set numTranstable3 replace-item 0 numTranstable3 val]
-        ]
-        [
-          ;2.
-          if sex = 3 and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-          [set val num-trans-One + item 1 numTranstable3
-            set numTranstable3 replace-item 1 numTranstable3 val]
-
-          ;3.
-          if sex = 3 and (item 2 counter-partner  - count-casuals) = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-          [set val num-trans-Casual + item 2 numTranstable3
-            set numTranstable3 replace-item 2 numTranstable3 val]
-
-          ;4.
-          if sex = 3 and (item 0 partner-array + item 1 partner-array) = 2 and (item 2 counter-partner  - count-casuals) = 0
-          [set val num-trans-One + num-trans-Two + item 3 numTranstable3
-            set numTranstable3 replace-item 3 numTranstable3 val]
-
-          ;5.
-          if sex = 3 and (item 2 counter-partner  - count-casuals) > 1 and (item 0 partner-array + item 1 partner-array) = 0
-          [set val num-trans-Casual + item 4 numTranstable3
-            set numTranstable3 replace-item 4 numTranstable3 val]
-
-          ;6.
-          if sex = 3 and (item 2 counter-partner  - count-casuals) > 0 and (item 0 partner-array + item 1 partner-array) > 0
-          [set val num-trans-One + num-trans-Two + num-trans-Casual + item 5 numTranstable3
-            set numTranstable3 replace-item 5 numTranstable3 val]
-
-        ]
-
-      ;;Count Transmissions for Table 3:
-
-      ;; count transmissions by partner type: 0= main partner; 1= concurrency; 2 = casual
-      ;      if sex <= 2 ;;(sex = 1 if female; 2 if male; 3 if MSM;)
-      ;
-      ;      [
-      ;        if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-      ;        [set val num-trans-One + num-trans-Two + item 0 count-trans-by-partner-type
-      ;        set count-trans-by-partner-type replace-item 0 count-trans-by-partner-type val]
-      ;
-      ;        if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
-      ;          [set val num-trans-One + num-trans-Two +  item 1 count-trans-by-partner-type
-      ;        set count-trans-by-partner-type replace-item 1 count-trans-by-partner-type val]
-      ;
-      ;        set val num-trans-Casual + item 2 count-trans-by-partner-type
-      ;        set count-trans-by-partner-type replace-item 2 count-trans-by-partner-type val
-      ;
-      ;
-      ;      ]
-      ;      if sex = 3 ;;(sex = 1 if female; 2 if male; 3 if MSM;)
-      ;        [
-      ;          if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-      ;          [ set val num-trans-One + num-trans-Two + item 3 count-trans-by-partner-type
-      ;          set count-trans-by-partner-type replace-item 3 count-trans-by-partner-type val]
-      ;
-      ;          if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
-      ;          [set val num-trans-One + num-trans-Two +  item 4 count-trans-by-partner-type
-      ;          set count-trans-by-partner-type replace-item 4 count-trans-by-partner-type val]
-      ;
-      ;          set val num-trans-Casual + item 5 count-trans-by-partner-type
-      ;          set count-trans-by-partner-type replace-item 5 count-trans-by-partner-type val
-      ;        ]
-
-      ;;transmissions by needle-sharing only for IDU
-      ; set val num-trans-Needle + item 6 count-trans-by-partner-type
-      ;set count-trans-by-partner-type replace-item 6 count-trans-by-partner-type val
-
-
+      count-by-partner-type
+      ;; calculate number of transmission by transmission type
+      table3
       ;; adding the newly infected person to simulation
-      if num-trans-One > 0
-        [initialize-transmissions num-trans-One 1]
-      if num-trans-Two > 0
-        [initialize-transmissions num-trans-Two 1];;; This person is the main partner for the concurrent partner he/she infected
-      if num-trans-Casual > 0
-        [initialize-transmissions num-trans-Casual 3]
-      if num-trans-Needle > 0
-        [initialize-transmissions num-trans-Needle 4]
-
-
-      set dummy 0;; a dummy variable used in redistributing age
-
+      add-infected
+      ;; a dummy variable used in redistributing age
+      set dummy 0
     ]
     ;;end of individuals in acute phase
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+end
 
+to non-acute-infection
 
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;; for individuals not in acute phase estimating tarnsmissions every month
-    ask people with [dead  = 0 and infected? = true and age - age-at-infection > 0.26 and age <= 65]
-    [
-      let count-casuals item 2 counter-partner
+  ask total-people with [age - age-at-infection > 0.26 and age <= 65]
+    [set count-casuals item 2 counter-partner
       setup-trans-initial-ppl-HET-MSM ;; procedure in concurrency-HET-MSM.nls that determines if succesful transmission
-
-                                      ;;track number of partners per month for MSM
+                                      ;; track number of partners per month for MSM
       if sex = 3
-      [
-        let inter-val (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals))
-        set partners-per-month replace-item inter-val partners-per-month ( item inter-val partners-per-month + 1)
+      [let inter-val (item 0 partner-array + item 1 partner-array + (item 2 counter-partner - count-casuals))
+        set partners-per-month replace-item inter-val partners-per-month (item inter-val partners-per-month + 1)
       ]
 
       set number-transmissions num-trans-One + num-trans-Two + num-trans-Casual + num-trans-Needle
       set life-time-transmissions life-time-transmissions + number-transmissions
 
-
       let val item (stage - 1) count-trans-by-stage + number-transmissions
       set count-trans-by-stage replace-item (stage - 1) count-trans-by-stage val
-
-
+      ifelse dropOut?
+      [set val item (stage - 1) count-trans-by-stage-drop-out + number-transmissions
+        set count-trans-by-stage-drop-out replace-item (stage - 1) count-trans-by-stage-drop-out val]
+      [set val item (stage - 1) count-trans-by-stage-first-time + number-transmissions
+        set count-trans-by-stage-first-time replace-item (stage - 1) count-trans-by-stage-first-time val]
       ;; count transmissions by partner type: 0= HET main to main(het has only main); 6 = HET main (main or concurrent)
       ; 1= MSM bisexula to female; 2 = MSM bisexual to MSM
+      count-by-partner-type
+      ;; calculate number of transmission by transmission type
+      table3
+      ;; add newly infected persons to model
+      add-infected
+      ;; a dummy variable used in redistributing age
+      set dummy 0
+    ]
 
-      ifelse sex <= 2
-      [
+end
 
-        ifelse (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-          [ set val num-trans-One +  item 0 count-trans-by-partner-type
-            set count-trans-by-partner-type replace-item 0 count-trans-by-partner-type val]
-          [
-            set val num-trans-One + num-trans-Two + num-trans-Casual + item 6 count-trans-by-partner-type
-            set count-trans-by-partner-type replace-item 6 count-trans-by-partner-type val
-          ]
-      ]
-      [
-        if sex = 3 and bi-sexual? = true and mix? = true
-        [set val num-trans-One + num-trans-Two + num-trans-Casual + item 1 count-trans-by-partner-type
-          set count-trans-by-partner-type replace-item 1 count-trans-by-partner-type val]
+to count-by-partner-type
 
-        if sex = 3 and bi-sexual? = true and mix? = false
-        [set val num-trans-One + num-trans-Two + num-trans-Casual + item 2 count-trans-by-partner-type
-          set count-trans-by-partner-type replace-item 2 count-trans-by-partner-type val]
+  let val 0
+
+  ifelse sex <= 2
+  [ifelse (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
+    [set val num-trans-One + item 0 count-trans-by-partner-type
+      set count-trans-by-partner-type replace-item 0 count-trans-by-partner-type val]
+    [set val num-trans-One + num-trans-Two + num-trans-Casual + item 6 count-trans-by-partner-type
+      set count-trans-by-partner-type replace-item 6 count-trans-by-partner-type val]
+  ]
+  [if (sex = 3) and bi-sexual? = true and mix? = true
+    [set val num-trans-One + num-trans-Two + num-trans-Casual + item 1 count-trans-by-partner-type
+      set count-trans-by-partner-type replace-item 1 count-trans-by-partner-type val]
+
+    if (sex = 3) and bi-sexual? = true and mix? = false
+    [set val num-trans-One + num-trans-Two + num-trans-Casual + item 2 count-trans-by-partner-type
+      set count-trans-by-partner-type replace-item 2 count-trans-by-partner-type val]
 
         ;; count transmissions by partner type: 3= MSM to  MSM (MSM has only 1 main);
         ;4= MSM to MSM (MSM has 1 or 2 main may or maynot have casuals); 5= MSM to casual partners ;
+    if (sex = 3)
+    [if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
+      [set val num-trans-One + num-trans-Two + item 3 count-trans-by-partner-type
+        set count-trans-by-partner-type replace-item 3 count-trans-by-partner-type val]
 
-        if sex = 3
-          [
-            if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-            [ set val num-trans-One + num-trans-Two + item 3 count-trans-by-partner-type
-              set count-trans-by-partner-type replace-item 3 count-trans-by-partner-type val]
+      if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
+        [set val num-trans-One + num-trans-Two +  item 4 count-trans-by-partner-type
+          set count-trans-by-partner-type replace-item 4 count-trans-by-partner-type val]
 
-            if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
-            [set val num-trans-One + num-trans-Two +  item 4 count-trans-by-partner-type
-              set count-trans-by-partner-type replace-item 4 count-trans-by-partner-type val]
-
-            set val num-trans-Casual + item 5 count-trans-by-partner-type
-            set count-trans-by-partner-type replace-item 5 count-trans-by-partner-type val
-          ]
-
-      ]
-
-
-      ;;;;;TABLE 3;;;
-      ;;;;;;;;;;;;;;;
-      ifelse (age - age-at-infection) <= 0.09
-        [
-          if sex = 3 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) > 1
-          [set val num-trans-One + num-trans-Two + num-trans-Casual + item 0 numTranstable3
-            set numTranstable3 replace-item 0 numTranstable3 val]
-        ]
-        [
-          ;2.
-          if sex = 3 and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-          [set val num-trans-One + item 1 numTranstable3
-            set numTranstable3 replace-item 1 numTranstable3 val]
-
-          ;3.
-          if sex = 3 and (item 2 counter-partner  - count-casuals) = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-          [set val num-trans-Casual + item 2 numTranstable3
-            set numTranstable3 replace-item 2 numTranstable3 val]
-
-          ;4.
-          if sex = 3 and (item 0 partner-array + item 1 partner-array) = 2 and (item 2 counter-partner  - count-casuals) = 0
-          [set val num-trans-One + num-trans-Two + item 3 numTranstable3
-            set numTranstable3 replace-item 3 numTranstable3 val]
-
-          ;5.
-          if sex = 3 and (item 2 counter-partner  - count-casuals) > 1 and (item 0 partner-array + item 1 partner-array) = 0
-          [set val num-trans-Casual + item 4 numTranstable3
-            set numTranstable3 replace-item 4 numTranstable3 val]
-
-          ;6.
-          if sex = 3 and (item 2 counter-partner  - count-casuals) > 0 and (item 0 partner-array + item 1 partner-array) > 0
-          [set val num-trans-One + num-trans-Two + num-trans-Casual + item 5 numTranstable3
-            set numTranstable3 replace-item 5 numTranstable3 val]
-
-
-
-        ]
-
-
-      ;; count transmissions by partner type: 0= main partner; 1= concurrency; 2 = casual
-      ;      if sex <= 2
-      ;
-      ;       [
-      ;        if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-      ;        [set val num-trans-One + num-trans-Two + item 0 count-trans-by-partner-type
-      ;        set count-trans-by-partner-type replace-item 0 count-trans-by-partner-type val]
-      ;
-      ;        if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
-      ;           [set val num-trans-One + num-trans-Two +  item 1 count-trans-by-partner-type
-      ;        set count-trans-by-partner-type replace-item 1 count-trans-by-partner-type val]
-      ;
-      ;        set val num-trans-Casual + item 2 count-trans-by-partner-type
-      ;        set count-trans-by-partner-type replace-item 2 count-trans-by-partner-type val
-      ;
-      ;
-      ;      ]
-      ;      if sex = 3 ;;(sex = 1 if female; 2 if male; 3 if MSM;)
-      ;        [
-      ;          if (item 0 partner-array = 1) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
-      ;          [ set val num-trans-One + num-trans-Two + item 3 count-trans-by-partner-type
-      ;          set count-trans-by-partner-type replace-item 3 count-trans-by-partner-type val]
-      ;
-      ;          if (item 0 partner-array = 1) or (item 1 partner-array = 1 )
-      ;          [set val num-trans-One + num-trans-Two +  item 4 count-trans-by-partner-type
-      ;          set count-trans-by-partner-type replace-item 4 count-trans-by-partner-type val]
-      ;
-      ;          set val num-trans-Casual + item 5 count-trans-by-partner-type
-      ;          set count-trans-by-partner-type replace-item 5 count-trans-by-partner-type val
-      ;        ]
-
-      ; set val num-trans-Needle + item 6 count-trans-by-partner-type
-      ; set count-trans-by-partner-type replace-item 6 count-trans-by-partner-type val
-
-
-      if num-trans-One > 0
-        [initialize-transmissions num-trans-One 1]
-      if num-trans-Two > 0
-        [initialize-transmissions num-trans-Two 1];;; This person is the main partner for the concurrent partner he/she infected
-      if num-trans-Casual > 0
-        [initialize-transmissions num-trans-Casual 3]
-      if num-trans-Needle > 0
-        [initialize-transmissions num-trans-Needle 4]
-
-
-      set dummy 0;; a dummy variable used in redistributing age
+      set val num-trans-Casual + item 5 count-trans-by-partner-type
+      set count-trans-by-partner-type replace-item 5 count-trans-by-partner-type val
     ]
-    ;;end of individuals in non-acute phase
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;;controlling for distribution of age at infection
-    if (ticks - sim-dry-run) mod 12 = 0
-      [manage-age-group]
-
-
-
-    ;;printing number partners per time-unit that was collected in previous steps - only for MSM
-    ;    if ticks <= (sim-dry-run + time-unit * num-year-trans)
-    ;    [
-    ;      file-open "results-num-partners.csv"
-    ;     ;; partnerships per month, 2 or more imples concurrency
-    ;      let sum-val 0
-    ;      let i 0
-    ;      while [i < length partners-per-month]
-    ;      [
-    ;        file-write item i partners-per-month
-    ;        set sum-val sum-val + item i partners-per-month
-    ;        set i i + 1
-    ;      ]
-    ;      file-write""
-    ;      file-write sum-val
-    ;      file-print ""
-    ;      file-close
-    ;
-    ;    ]
-
-    ;;As trasnmissions occurred the dummy people from reserve (who were infected and in no way part of simulation)
-    ;; were taken and set as infected to denote the infected person
-    ;;here creating more people in reserve
-    if (count people with [infected? = false]) <= 3 * number-people * 1 / 12
-    [setup-people]
-
-
-    ;; generating output every year. Since each tick is assumed a month we write outputs only every year
-    if (ticks - sim-dry-run) mod 12 = 0 and ticks <= (sim-dry-run + time-unit * num-year-trans) ;; generarte transmissions for num-year-trans years
-    [
-
-      ;plot-MSM-stage
-      ;plot-het-stage
-      ;update-plot
-      ;write-output ;; procedure below that writes output
-;      if ticks = (sim-dry-run + time-unit * dry-run)
-;      [
-;        file-open "results-concurrency-one.csv"
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-print""
-;        file-close
-;      ]
-
-      if ticks >= (sim-dry-run + time-unit * dry-run)      [
-     ; writeOutputValidation;
-      write-output;
-        ]
-      if ticks = (sim-dry-run + time-unit * (dry-run + 5))      [;year 2010
-      set InititalINfections  count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
-      ]
-      if ticks = (sim-dry-run + time-unit * (dry-run + 15))   [;year 2020
-      set finalINfections  count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
-      file-open "infectionsReduction.csv"
-      file-print (- finalINfections + InititalINfections) / InititalINfections
-      file-close
-      ]
-
-
-;      file-open "results-num-partners.csv"
-;      file-write median [item 0 counter-partner + item 1 counter-partner + item 2 counter-partner] of people with [infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) > 0]
-;      file-write min [item 0 counter-partner + item 1 counter-partner + item 2 counter-partner] of people with [infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) > 0]
-;      file-write max [item 0 counter-partner + item 1 counter-partner + item 2 counter-partner] of people with [infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) > 0]
-;      file-write mean [item 0 counter-partner + item 1 counter-partner + item 2 counter-partner] of people with [infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) > 0]
-;      file-write ""
-;      file-write count people with  [ infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0]
-;      file-write count people with [ infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1]
-;      file-write count people with  [ infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 2]
-;      file-write count people with  [ infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 3]
-;      file-write count people with  [ infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 4]
-;      file-write count people with  [ infected? = true and dead = 0 and sex = 3 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) > 4]
-;      file-print ""
-;      file-close
-      set count-trans-by-stage [0 0 0 0 0 0] ;; resetting counters every year
-      set count-trans-by-partner-type [0 0 0 0 0 0 0];;;; resetting counters year
-      set numACTStable3 [0 0 0 0 0 0]; resetting counters year
-      set numTranstable3 [0 0 0 0 0 0];  resetting counters year
-      set countNewDiagnosis [0 0 0 0 0 0];  resetting counters new diagnosis
-      ask people with [infected? = true]
-      [
-        set counter-partner replace-item 0 counter-partner (item 0 partner-array)
-        set counter-partner replace-item 1 counter-partner (item 1 partner-array)
-        set counter-partner replace-item 2 counter-partner 0
-      ]
-
-      ;display-check
-    ]
-
-    tick
-
-    ;; DIFFERENT WAYS OF TERMINATING SIMULATION. CAN USE IF NEEDED
-    ;    ;;simulate until everyone is dead; used for verifying disease progression model
-    ;    ;ifelse count people with [dead = 0 and index-patient? = false and infected? = true] > 0
-    ;
-    ;    ;;simulate based on number of years; used for validation of transmission model
-    ;    ifelse ticks <= simulation-years ;+ sim-dry-run
-    ;    [
-    ;      tick
-    ;    ]
-    ;    [
-
-
   ]
 
+end
 
-  if ticks > (sim-dry-run + time-unit * num-year-trans)
-  [
-    ;;NHAS goals see TRIP-May 9th 2012 talk
-    if goal = 1 [file-open "results-concurrency-one.csv"
-      file-print""
-;     file-print""
-;      file-print""
-;       file-print""
-;        file-print""
-;         file-print""
-;          file-print""
-;     file-print""
-;      file-print""
-;       file-print""
-;        file-print""
-;     file-print""
-;      file-print""
-;       file-print""
-;        file-print""
-;         file-print""
-;          file-print""
-;     file-print""
-;      file-print""
-;       file-print""
+to table3
 
-            file-close ]
-;    if goal = 2 [file-open "results-concurrency-two.csv"]
-;    if goal = 3 [file-open "results-concurrency-three.csv"]
-;    if goal = 4 [file-open "results-concurrency-four.csv"]
-;    if goal = 5 [file-open "results-concurrency-five.csv"]
-;    file-open "results-Validation.csv"
-;      file-print""
-;     file-print""
-;      file-print""
-;       file-print""
-;        file-print""
-;         file-print""
-;            file-close
-;
-;    file-open "timeToAIDS.csv"
-;
-;
-;         file-print""
-;    file-close
-;
+  let val 0
 
+  ifelse (age - age-at-infection) <= 0.09
+  [if (sex = 3) and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) > 1
+    [set val num-trans-One + num-trans-Two + num-trans-Casual + item 0 numTranstable3
+      set numTranstable3 replace-item 0 numTranstable3 val]
+  ]
+  [;2.
+    if (sex = 3) and item 0 partner-array = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner - count-casuals)) = 1
+    [set val num-trans-One + item 1 numTranstable3
+      set numTranstable3 replace-item 1 numTranstable3 val]
+    ;3.
+    if (sex = 3) and (item 2 counter-partner - count-casuals) = 1 and (item 0 partner-array + item 1 partner-array + (item 2 counter-partner  - count-casuals)) = 1
+    [set val num-trans-Casual + item 2 numTranstable3
+      set numTranstable3 replace-item 2 numTranstable3 val]
+    ;4.
+    if (sex = 3) and (item 0 partner-array + item 1 partner-array) = 2 and (item 2 counter-partner  - count-casuals) = 0
+    [set val num-trans-One + num-trans-Two + item 3 numTranstable3
+      set numTranstable3 replace-item 3 numTranstable3 val]
+    ;5.
+    if (sex = 3) and (item 2 counter-partner - count-casuals) > 1 and (item 0 partner-array + item 1 partner-array) = 0
+    [set val num-trans-Casual + item 4 numTranstable3
+      set numTranstable3 replace-item 4 numTranstable3 val]
+    ;6.
+    if (sex = 3) and (item 2 counter-partner  - count-casuals) > 0 and (item 0 partner-array + item 1 partner-array) > 0
+    [set val num-trans-One + num-trans-Two + num-trans-Casual + item 5 numTranstable3
+      set numTranstable3 replace-item 5 numTranstable3 val]
   ]
 
-
-end
-;;END OF GO PROCUEDURE
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to writeOutputValidation
-  file-open "results-Validation.csv"
-
-  ;;;;output of PLWH
-  file-write count people with [infected? = true and dead = 0 and sex = 1]
-  file-write count people with [infected? = true and dead = 0 and sex = 2]
-  file-write count people with [infected? = true and dead = 0 and sex = 3]
-  file-write count people with [infected? = true and dead = 0 and sex = 4]
-  file-write count people with [infected? = true and dead = 0 and sex = 5]
-  file-write count people with [infected? = true and dead = 0 and sex = 6]
-  file-write count people with [infected? = true and dead = 0 ]
-  file-write ""
-  ;count people with [infected? = true and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ] / count people with [infected? = true and dead = 0]
-
-  ;;OUTPUT NUMBER INCIDENCES IN THIS YEAR
-  file-write count people with [infected? = true and sex = 1 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 4 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 5 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 6 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
-  file-write ""
-
-  ;;OUTPUT PROPORTION INCIDENCES  BY STAGE
-  let sum-val 0
-  let i 0
-  while [i < length count-trans-by-stage]
-    [
-      set sum-val sum-val + item i count-trans-by-stage
-      set i i + 1
-    ]
-  ; print sum-val
-  file-write item 0 count-trans-by-stage / sum-val
-  file-write item 1 count-trans-by-stage / sum-val
-  file-write item 2 count-trans-by-stage / sum-val
-  file-write item 3 count-trans-by-stage / sum-val
-  file-write item 4 count-trans-by-stage / sum-val
-  file-write item 5 count-trans-by-stage / sum-val
-  file-write ""
-
-  ;;OUTPUT PROPORTION INCIDENCES  BY PARTNER TYPE
-  ; set sum-val 0
-  ; set i 0
-  ; while [i < length count-trans-by-partner-type]
-  ;   [
-  ;     set sum-val sum-val + item i count-trans-by-partner-type
-  ;     set i i + 1
-  ;   ]
-  ; print sum-val
-  ; print""
-  set i 0
-  while [i < length (count-trans-by-partner-type)]
-  [file-write item i count-trans-by-partner-type
-    set i i + 1
-  ]
-
-  file-write ""
-
-  ;;OUPUT CD4-COUNT AT DIAGNOSIS;; note: next-test is the time unit at which person was diagnosed
-  set sum-val count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write ""
-
-  set sum-val count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
-  file-write ""
-
-  ;;PROPORTION IN STAGE
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 1] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 2] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 3] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 4] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 5] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 6] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write ""
-  file-write  count people with [infected? = true and sex >= 3 and dead = 0 and stage = 1] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 2] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 3] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 4] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 5] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 6] / count people with [infected? = true and sex >= 3 and dead = 0]
-   file-write ""
-
-  ;;Number newly diagnosed
-  file-write  item 0 countNewDiagnosis
-  file-write  item 1 countNewDiagnosis
-  file-write  item 2 countNewDiagnosis
-  file-write  item 3 countNewDiagnosis
-  file-write  item 4 countNewDiagnosis
-  file-write  item 5 countNewDiagnosis
-  file-write ""
-  ;
-  ;Deaths
-  file-write count people with [infected? = true  and dead = 1 and stage > 2 and sex = 1]; cumulative deaths among those aware
-  file-write count people with [infected? = true  and dead = 1 and stage > 2 and sex = 2]; cumulative deaths among those aware
-  file-write count people with [infected? = true  and dead = 1 and stage > 2 and sex = 3]; cumulative deaths among those aware
-  file-write count people with [infected? = true  and dead = 1 and stage > 2]; cumulative deaths among all PLWH
-  file-write ""
-
-  ;;mean years to diagnosis among new diagnosis
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false  and stage > 2 and abs (age - age-Diag) <= 1]
-  file-write ""
-
-  ;;Mean age  to ART by CD4 count (for estimating time to CD4 decline)age-ART-start includes age at reentry if drop out of care(better to use age-diag
-  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false  and age-ART-start > 0 and CD4-ART >  0 and CD4-ART < 200]
-  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  200 and CD4-ART < 250]
-  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  250 and CD4-ART < 300]
-  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  300 and CD4-ART < 350]
-  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  350 and CD4-ART < 500]
-  file-write "";median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  500]
-  file-write ""
-
-  ;;Median age  to diagnosis by CD4 count (for estimating time to CD4 decline)
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >  0 and  CD4-diagnosis < 200]
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  200 and  CD4-diagnosis < 250]
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  250 and  CD4-diagnosis < 300]
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  300 and  CD4-diagnosis < 350]
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  350 and  CD4-diagnosis < 500]
-  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  500]
-
-  ;;Survival for >12 >24 and >36 months from diagnosis
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 ] ;total diagnosed >36 month back
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 and dead = 1 and (life-with-infection - (age-Diag - age-at-infection)) <= 2 and (life-with-infection - (age-Diag - age-at-infection)) > 1]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 and dead = 1 and (life-with-infection - (age-Diag - age-at-infection)) <= 3 and (life-with-infection - (age-Diag - age-at-infection)) > 2]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 and dead = 1 and (life-with-infection - (age-Diag - age-at-infection)) > 3] + count people with [infected? = true and index-patient? = false and aware? = true and ticks - age-Diag * time-unit > 36 and dead = 0]
-file-write""
-
-  ;;New diagnosis by age
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 20]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 25 and age >= 20]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 30 and age >= 25]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 35 and age >= 30]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 40 and age >= 35]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 45 and age >= 40]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 50 and age >= 45]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 55 and age >= 50]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 60 and age >= 55]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 65 and age >= 60]
-  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age >= 65]
-  file-write""
-
-;  ;;mean life expectancy
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 25]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 35 and age >= 25]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 40 and age >= 35]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 45 and age >= 40]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 50 and age >= 45]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 55 and age >= 50]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 60 and age >= 55]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 65 and age >= 60]
-;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age >= 65]
-;  file-write""
-;
-;
-
-  file-print""
-
-    file-close
-  ;;Time to AIDS
-
-  if ticks = (sim-dry-run + time-unit * num-year-trans) [
-
-    file-open "timeToAIDS.csv"
-    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >  0 and CD4-ART < 200]
-    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  200 and CD4-ART < 250]
-    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  250 and CD4-ART < 300]
-    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  300 and CD4-ART < 350]
-    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  350 ]
-    file-print""
-
-    ask people with [infected? = true and index-patient? = false  and AIDS? = true and dead = 1 and CD4-ART >  0] [
-      file-write time-onset-AIDS
-      file-write CD4-ART
-      file-print""
-    ]
-    file-close
-  ]
-
-
-
 end
 
+to add-infected
+
+  if num-trans-One > 0
+  [initialize-transmissions num-trans-One 1]
+  if num-trans-Two > 0
+  [initialize-transmissions num-trans-Two 1];;; This person is the main partner for the concurrent partner he/she infected
+  if num-trans-Casual > 0
+  [initialize-transmissions num-trans-Casual 3]
+  if num-trans-Needle > 0
+  [initialize-transmissions num-trans-Needle 4]
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;WRITING RESULTS TO EXCEL FILE
-to write-output
-  ;;writing out all the results into excel file
-
-  ;;NHAS goals see TRIP-May 9th 2012 talk
-  if goal = 1 [file-open "results-concurrency-one.csv"]
-  if goal = 2 [file-open "results-concurrency-two.csv"]
-  if goal = 3 [file-open "results-concurrency-three.csv"]
-  if goal = 4 [file-open "results-concurrency-four.csv"]
-  if goal = 5 [file-open "results-concurrency-five.csv"]
-
-  ;;;;output of PLWH
-  file-write count people with [infected? = true and dead = 0 and sex = 1]
-  file-write count people with [infected? = true and dead = 0 and sex = 2]
-  file-write count people with [infected? = true and dead = 0 and sex = 3]
-  file-write count people with [infected? = true and dead = 0 and sex = 4]
-  file-write count people with [infected? = true and dead = 0 and sex = 5]
-  file-write count people with [infected? = true and dead = 0 and sex = 6]
-  file-write count people with [infected? = true and dead = 0 ]
-  file-write ""
-  ;count people with [infected? = true and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ] / count people with [infected? = true and dead = 0]
-
-  ;;OUTPUT NUMBER INCIDENCES IN THIS YEAR
-  file-write count people with [infected? = true and sex = 1 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 4 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 5 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and sex = 6 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  file-write  count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
-  file-write ""
-
-  ;;OUTPUT PROPORTION INCIDENCES  BY STAGE
-  let sum-val 0
-  let i 0
-  while [i < length count-trans-by-stage]
-    [
-      set sum-val sum-val + item i count-trans-by-stage
-      set i i + 1
-    ]
-  ; print sum-val
-  file-write item 0 count-trans-by-stage / sum-val
-  file-write item 1 count-trans-by-stage / sum-val
-  file-write item 2 count-trans-by-stage / sum-val
-  file-write item 3 count-trans-by-stage / sum-val
-  file-write item 4 count-trans-by-stage / sum-val
-  file-write item 5 count-trans-by-stage / sum-val
-  file-write ""
-
-  ;;OUTPUT PROPORTION INCIDENCES  BY PARTNER TYPE
-  ; set sum-val 0
-  ; set i 0
-  ; while [i < length count-trans-by-partner-type]
-  ;   [
-  ;     set sum-val sum-val + item i count-trans-by-partner-type
-  ;     set i i + 1
-  ;   ]
-  ; print sum-val
-  ; print""
-  set i 0
-  while [i < length (count-trans-by-partner-type)]
-  [file-write item i count-trans-by-partner-type
-    set i i + 1
-  ]
-
-  file-write ""
-
-  ;;OUPUT CD4-COUNT AT DIAGNOSIS;; note: next-test is the time unit at which person was diagnosed
-  set sum-val count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write ""
-
-  set sum-val count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
-;  file-write ""
-
-  ;;Count new diagnosis
-  file-write  item 0 countNewDiagnosis
-  file-write  item 1 countNewDiagnosis
-  file-write  item 2 countNewDiagnosis
-  file-write  item 3 countNewDiagnosis
-  file-write  item 4 countNewDiagnosis
-  file-write  item 5 countNewDiagnosis
-  file-write ""
-    file-write ""
-      file-write ""
-        file-write ""
-
-  ;;PROPORTION IN STAGE
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 1] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 2] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 3] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 4] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 5] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 6] / count people with [infected? = true and sex <= 2 and dead = 0]
-  file-write ""
-  file-write  count people with [infected? = true and sex >= 3 and dead = 0 and stage = 1] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 2] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 3] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 4] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 5] / count people with [infected? = true and sex >= 3 and dead = 0]
-  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 6] / count people with [infected? = true and sex >= 3 and dead = 0]
-
-  ;;Number of main, concurrent and casual partners
-  file-write ""
-  set sum-val count people with [infected? = true and dead = 0 and sex <= 2]
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 0 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 1 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 2 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 3 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner >= 4 and sex <= 2] / sum-val
-  file-write ""
-  ; set sum-val count people with [infected? = true and dead = 0]
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 0 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 1 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 2 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 3 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner >= 4 and sex <= 2] / sum-val
-  file-write ""
-  ; set sum-val count people with [infected? = true and dead = 0]
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 0 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 1 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 2 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 3 and sex <= 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner >= 4 and sex <= 2] / sum-val
-
-
-  file-write ""
-  set sum-val count people with [infected? = true and dead = 0 and sex = 3]
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 0 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 1 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 2 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 3 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner >= 4 and sex = 3] / sum-val
-  file-write ""
-  ; set sum-val count people with [infected? = true and dead = 0]
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 0 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 1 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 2 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 3 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner >= 4 and sex = 3] / sum-val
-  file-write ""
-  ; set sum-val count people with [infected? = true and dead = 0]
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 0 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 1 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 2 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 3 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner >= 4 and sex = 3] / sum-val
-
-  ;;Number of main + concurrent + casual partners of all HET
-  file-write ""
-  set sum-val count people with [infected? = true and dead = 0 and sex = 2]
-  file-write sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0 and sex = 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 and sex = 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 2 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 4 and sex = 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 5 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 9 and sex = 2] / sum-val
-  file-write count people with [infected? = true and dead = 0 and ( item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 10 and sex = 2] / sum-val
-
-  file-write ""
-  ;;Number of main + concurrent + casual partners of all MSM
-  set sum-val count people with [infected? = true and dead = 0 and sex = 3 ]
-  file-write sum-val
-  file-write count people with [infected? = true and dead = 0  and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 2 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 4 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 5 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 9 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and ( item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 10 and sex = 3] / sum-val
-
-  file-write ""
-  ;;Number of main + concurrent + casual partners of MSM with atleast one casual partner
-  set sum-val count people with [infected? = true and dead = 0 and sex = 3 and item 2 counter-partner > 0]
-  file-write sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 2 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 4 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 5 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 9 and sex = 3] / sum-val
-  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and ( item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 10 and sex = 3] / sum-val
-
-
-  file-write ""
-
-  ;;OUTPUT PROP INCIDENCES IN THIS YEAR BY AGE
-  set sum-val count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-
-  file-write count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age < 30] / sum-val
-  file-write  count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 30 and age < 40] / sum-val
-  file-write count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 40 and age < 50] / sum-val
-  file-write  count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 50] / sum-val
-  file-write ""
-  set sum-val count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-
-  file-write count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age < 30] / sum-val
-  file-write  count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 30 and age < 40] / sum-val
-  file-write count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 40 and age < 50] / sum-val
-  file-write  count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 50] / sum-val
-  file-write ""
-
-  set sum-val count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  if sum-val = 0 [set sum-val 1]
-  file-write count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age < 30] / sum-val
-  file-write  count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 30 and age < 40] / sum-val
-  file-write count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 40 and age < 50] / sum-val
-  file-write  count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 50] / sum-val
-  file-write ""
-
-  ;;average and median CD4 at diagnosis
-  file-write mean [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex <= 2]
-  file-write median [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex <= 2]
-  file-write count people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex <= 2]
-  file-write ""
-
-  file-write mean [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex = 3]
-  file-write median [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex = 3]
-  file-write count people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex = 3]
-  file-write ""
-
-  ;;average and median CD4 at initial ART
-  file-write mean [CD4-ART] of people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex <= 2]
-  file-write median [CD4-ART] of people with [infected? = true  and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex <= 2]
-  file-write count people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex <= 2]
-  file-write ""
-
-  file-write mean [CD4-ART] of people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex = 3]
-  file-write median [CD4-ART] of people with [infected? = true  and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex = 3]
-  file-write count people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex = 3]
-  file-write ""
-
-  ;;cost this time-unit. Multipliying by time-unit to convert to annual cost assuming approximately same each year
-  file-write sum[costs] of people with [infected? = true] * time-unit
-  file-write sum[util-cost] of people with [infected? = true] * time-unit
-  file-write sum[regimen-cost-quarter] of people with [infected? = true] * time-unit
-  file-write sum[oi-cost-quarter] of people with [infected? = true] * time-unit
-  file-write sum[ care-service-cost] of people with [infected? = true] * time-unit
-  file-write sum[ test-cost] of people with [infected? = true] * time-unit
-  file-write ""
-
-  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true]
-  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true and (quarter-linked-care - next-test) <= 3 * time-unit / 12] ;; within 3 months of diagnosis
-  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true  and (quarter-linked-care - next-test) <= 6 * time-unit / 12] ;; within 3 months of diagnosis
-  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true  and (quarter-linked-care - next-test) <= 12 * time-unit / 12] ;; within 3 months of diagnosis
-  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true  and (quarter-linked-care - next-test) <= 24 * time-unit / 12] ;; within 3 months of diagnosis
-  file-write ""
-  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true  and dead = 0]
-  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true and stage = 3 and dead = 0];; proportion every year who dropped out of care
-  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true  and dead = 1]
-  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true and in-care? = false and dead = 1];; individuals who dropped out of care -may or may not have entered back
-
-
-  file-write ""
-  file-write count people with [infected? = true and  index-patient? = false and linked-to-care? = true  and quarter-ART-start > 0 and dead = 1]
-  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true  and quarter-ART-start > 0 and retention-in-ART = 1 and dead = 1]
-
-
-  file-write ""
-  ;;for those people who are dead write life-variables.
-  if count people with [infected? = true and dead = 1 and index-patient? = false and AIDS? = true] > 1
-  [file-write count people with [infected? = true and dead = 1 and index-patient? = false ] ;; count people for who we are extracting life varibles
-    file-write count people with [infected? = true and dead = 1 and index-patient? = false  and AIDS? = true]
-    file-write ""
-    file-write mean [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [life-time-transmissions] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [time-onset-AIDS ] of people with [infected? = true and dead = 1 and index-patient? = false  and AIDS? = true]
-    file-write mean [life-lost-to-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [TOTAL-COSTS] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
-
-    file-write mean [total-utilization-cost] of people with [infected? = true and dead = 1 and index-patient? = false ] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
-    file-write mean [total-regimen-cost] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write mean [total-OI-cost] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write ""
-    file-write mean [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and index-patient? = false ]
-
-
-    file-write ""
-    file-write ""
-    file-write ""
-    file-write standard-deviation [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [life-time-transmissions] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [time-onset-AIDS ] of people with [infected? = true and dead = 1 and index-patient? = false  and AIDS? = true]
-    file-write standard-deviation [life-lost-to-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [TOTAL-COSTS] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
-
-    file-write standard-deviation [total-utilization-cost] of people with [infected? = true and dead = 1 and index-patient? = false ] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
-    file-write standard-deviation [total-regimen-cost] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write standard-deviation [total-OI-cost] of people with [infected? = true and dead = 1 and index-patient? = false ]
-    file-write ""
-    file-write standard-deviation [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and index-patient? = false]
-  ]
-
-  file-write ""
-  file-write ""
-
-  file-write numActsCasualMSM
-  file-write numActsMainMSM
-  file-write numActsConMSM
-  file-write numActsMainHET
-  file-write numActsConHET
-
-  set i  0
-  while [i <= 5]
-    [  file-write item i numACTStable3 ;
-      set i i + 1
-    ]
-  set i  0
-  while [i <= 5]
-    [  file-write item i numTranstable3 ;
-      set i i + 1
-    ]
-
-  file-print ""
-  file-close
-
-end
-
-to write-life-variables
-
-  if goal = 1 [file-open "results-concurrency-one.csv"]
-  if goal = 2 [file-open "results-concurrency-two.csv"]
-  if goal = 3 [file-open "results-concurrency-three.csv"]
-  if goal = 4 [file-open "results-concurrency-four.csv"]
-  if goal = 5 [file-open "results-concurrency-five.csv"]
-
-  file-print""
-  file-close
-
-
-  if goal = 1 [file-open "results-life-variables-one.csv"]
-  if goal = 2 [file-open "results-life-variables-two.csv"]
-  if goal = 3 [file-open "results-life-variables-three.csv"]
-  if goal = 4 [file-open "results-life-variables-four.csv"]
-  if goal = 5 [file-open "results-life-variables-five.csv"]
-
-  let i 1
-  repeat 3
-    [
-
-      file-write count people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i] ;; count people for who we are extracting life varibles
-      file-write count people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i and AIDS? = true]
-      file-write ""
-      file-write mean [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [life-time-transmissions] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [time-onset-AIDS ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i and AIDS? = true]
-      file-write mean [life-lost-to-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [TOTAL-COSTS] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-
-      file-write mean [total-utilization-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
-      file-write mean [total-regimen-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write mean [total-OI-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write ""
-      file-write mean [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-
-      file-print ""
-      file-write ""
-      file-write ""
-      file-write ""
-      file-write standard-deviation [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [life-time-transmissions] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [time-onset-AIDS ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i and AIDS? = true]
-      file-write standard-deviation [life-lost-to-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [life-with-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [TOTAL-COSTS] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-
-      file-write standard-deviation [total-utilization-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
-      file-write standard-deviation [total-regimen-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write standard-deviation [total-OI-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-      file-write ""
-      file-write standard-deviation [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
-
-      file-print ""
-      file-print ""
-      set i i + 1
-    ]
-
-  file-write ""
-
-  file-print ""
-  file-print ""
-  file-close
-
-
-end
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;; PROCEDURES for VERIFICATION AND PLOTTING WHICH I DONT USE MUCH AS I OUTPUT ALL RESULTS IN EXCEL (above procedure). BUt left it here for future use
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-to display-check
-  let age-group [12 14 19 24 29 34 39 44 49 54 59 64 70] ;; upper bound of age group
-
-  let actual-age-dist [0.002393266  0.009164544  0.029236161  0.060509491  0.089801688  0.14997135  0.208261105  0.185116563  0.129935884  0.073902017  0.034049807  0.027658125]
-  let actual-stage-dist-fem [0.006201827  0.191130279  0.369227231  0.117028979  0.316411684]
-  let actual-stage-dist-male [0.005394933  0.244379639  0.345103697  0.109382867  0.295738864]
-  let actual-stage-dist-MSM [0.006226264  0.215153047  0.358165517  0.113522897  0.306932276]
-
-  let age-dist []
-  let i 1
-  repeat length age-group - 1
-  [
-    ;set age-dist lput ((count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] / count people with [infected? = true and dead = 0 ]) - item (i - 1) actual-age-dist) age-dist
-    set age-dist lput (count people with [infected? = true and dead = 0 and age <= item i age-group and age > item (i - 1) age-group] / count people with [infected? = true and dead = 0 ]) age-dist
-    set i i + 1
-  ]
-
-  let stage-dist-fem []
-  set i 1
-  while [i <= 6]
-  [
-    ; set stage-dist-fem lput (((count people with [infected? = true and dead = 0 and stage = i and sex = 1] / count people with [infected? = true and dead = 0 and sex = 1]) - item (i - 1) actual-stage-dist-fem) / item (i - 1) actual-stage-dist-fem) stage-dist-fem
-    set stage-dist-fem lput (count people with [infected? = true and dead = 0 and stage = i and sex = 1] / count people with [infected? = true and dead = 0 and sex = 1]) stage-dist-fem
-    set i i + 1
-  ]
-
-  let stage-dist-male []
-  set i 1
-  while [i <= 6]
-  [
-    ;set stage-dist-male lput (((count people with [infected? = true and dead = 0 and stage = i and sex = 2] / count people with [infected? = true and dead = 0 and sex = 2] ) - item (i - 1) actual-stage-dist-male) / item (i - 1) actual-stage-dist-male) stage-dist-male
-    set stage-dist-male lput (count people with [infected? = true and dead = 0 and stage = i and sex = 2] / count people with [infected? = true and dead = 0 and sex = 2] ) stage-dist-male
-    set i i + 1
-  ]
-
-  let stage-dist-MSM []
-  set i 1
-  while [i <= 6]
-  [
-    ;set stage-dist-MSM lput (((count people with [infected? = true and dead = 0 and stage = i and sex = 3] / count people with [infected? = true and dead = 0 and sex = 3]) - item (i - 1) actual-stage-dist-MSM) / item (i - 1) actual-stage-dist-MSM) stage-dist-MSM
-    set stage-dist-MSM lput (count people with [infected? = true and dead = 0 and stage = i and sex = 3] / count people with [infected? = true and dead = 0 and sex = 3]) stage-dist-MSM
-    set i i + 1
-  ]
-
-
-
-  print age-dist
-  print  stage-dist-fem
-  print stage-dist-male
-  print stage-dist-MSM
-  print ""
-end
-
-to setup-plot
-  set-current-plot "Transmissions"
-  ; set-plot-y-range 0 (number-people + 50)
-end
-
-to setplot-het-stage
-  set-current-plot "Stage Distribution- Heterosexuals"
-  ;set-plot-x-range 1 6
-  ;set-plot-y-range 0 1
-  ;set-histogram-num-bars 5
-end
-to setplot-trans-by-stage
-  set-current-plot "Proportion transmissions in stage"
-end
-
-to plot-trans-by-stage
-  let sum-val 0
-  let i 0
-  while [i < length count-trans-by-stage]
-  [
-    set sum-val sum-val + item i count-trans-by-stage
-    set i i + 1
-  ]
-  set-current-plot "Proportion transmissions in stage"
-  set-current-plot-pen "acute-unaware"
-  plot item 0 count-trans-by-stage / sum-val
-  set-current-plot-pen "non-acute-unaware"
-  plot item 1 count-trans-by-stage / sum-val
-  set-current-plot-pen "aware-no care"
-  plot item 2 count-trans-by-stage / sum-val
-  set-current-plot-pen "aware-care-no ART"
-  plot item 3 count-trans-by-stage / sum-val
-  set-current-plot-pen "ART-not suppressed"
-  plot item 4 count-trans-by-stage / sum-val
-  set-current-plot-pen "ART-suppressed"
-  plot item 5 count-trans-by-stage / sum-val
-
-end
-
-
-
-to plot-het-stage
-  set-current-plot "Stage Distribution- Heterosexuals"
-  set-current-plot-pen "acute-unaware"
-  plot count people with [infected? = true and sex <= 2 and dead = 0 and stage = 1] / count people with [infected? = true and sex <= 2 and dead = 0]
-  set-current-plot-pen "non-acute-unaware"
-  plot count people with [infected? = true and sex <= 2 and dead = 0 and stage = 2] / count people with [infected? = true and sex <= 2 and dead = 0]
-  set-current-plot-pen "aware-no care"
-  plot count people with [infected? = true and sex <= 2 and dead = 0 and stage = 3] / count people with [infected? = true and sex <= 2 and dead = 0]
-  set-current-plot-pen "aware-care-no ART"
-  plot count people with [infected? = true and sex <= 2 and dead = 0 and stage = 4] / count people with [infected? = true and sex <= 2 and dead = 0]
-  set-current-plot-pen "ART-not suppressed"
-  plot count people with [infected? = true and sex <= 2 and dead = 0 and stage = 5] / count people with [infected? = true and sex <= 2 and dead = 0]
-  set-current-plot-pen "ART-suppressed"
-  plot count people with [infected? = true and sex <= 2 and dead = 0 and stage = 6] / count people with [infected? = true and sex <= 2 and dead = 0]
-
-  ; histogram [stage] of people with [infected? = true and sex <= 2 and dead = 0]       ; using the default plot pen
-end
-
-to setplot-MSM-stage
-  set-current-plot "Stage Distribution- MSM"
-  ;set-plot-x-range 1 6
-  ;set-plot-y-range 0 1
-  ;set-histogram-num-bars 5
-end
-
-to plot-MSM-stage
-  set-current-plot "Stage Distribution- MSM"
-
-  set-current-plot-pen "acute-unaware"
-  plot count people with [infected? = true and sex = 3 and dead = 0 and stage = 1] / count people with [infected? = true and sex = 3 and dead = 0]
-  set-current-plot-pen "non-acute-unaware"
-  plot count people with [infected? = true and sex = 3 and dead = 0 and stage = 2] / count people with [infected? = true and sex = 3 and dead = 0]
-  set-current-plot-pen "aware-no care"
-  plot count people with [infected? = true and sex = 3 and dead = 0 and stage = 3] / count people with [infected? = true and sex = 3 and dead = 0]
-  set-current-plot-pen "aware-care-no ART"
-  plot count people with [infected? = true and sex = 3 and dead = 0 and stage = 4] / count people with [infected? = true and sex = 3 and dead = 0]
-  set-current-plot-pen "ART-not suppressed"
-  plot count people with [infected? = true and sex = 3 and dead = 0 and stage = 5] / count people with [infected? = true and sex = 3 and dead = 0]
-  set-current-plot-pen "ART-suppressed"
-  plot count people with [infected? = true and sex = 3 and dead = 0 and stage = 6] / count people with [infected? = true and sex = 3 and dead = 0]
-
-  ;histogram [stage] of people with [infected? = true and sex = 3 and dead = 0]          ; using the default plot pen
-end
-
-to setplot-CD4-diagnosis-HET
-  set-current-plot "CD4 count at diagnosis - Heterosexuals"
-  ;set-plot-x-range 4 800
-  ;set-plot-y-range 0 1
-  ;set-histogram-num-bars 4
-end
-
-to plot-CD4-diagnosis-HET
-  set-current-plot "CD4 count at diagnosis - Heterosexuals"
-  ; histogram [CD4-count] of people with [infected? = true and aware? = true and aware-previous-quarter? = false ]          ; using the default plot pen
-  ;histogram [CD4-diagnosis] of people with [infected? = true and aware? = true and sex <= 2]
-  set-current-plot-pen "<=200"
-  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and next-test > 0] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-  set-current-plot-pen "200-350"
-  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and next-test > 0] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-  set-current-plot-pen "350-500"
-  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and next-test > 0] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-  set-current-plot-pen ">500"
-  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 500 and next-test > 0] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-
-end
-
-;to plot-CD4-diagnosis-HET
-;  set-current-plot "CD4 count at diagnosis - Heterosexuals"
-; ; histogram [CD4-count] of people with [infected? = true and aware? = true and aware-previous-quarter? = false ]          ; using the default plot pen
-;  ;histogram [CD4-diagnosis] of people with [infected? = true and aware? = true and sex <= 2]
-;   set-current-plot-pen "<=200"
-;  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and index-patient? = false] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;  set-current-plot-pen "200-350"
-;  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and index-patient? = false] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;  set-current-plot-pen "350-500"
-;  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and index-patient? = false] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;  set-current-plot-pen ">500"
-;  plot count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 500 and index-patient? = false] / count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;
-;end
-
-to setplot-CD4-diagnosis-MSM
-  set-current-plot "CD4 count at diagnosis - MSM"
-  ;set-plot-x-range 4 800
-  ;set-plot-y-range 0 1
-  ;set-histogram-num-bars 4
-end
-
-to plot-CD4-diagnosis-MSM
-  set-current-plot "CD4 count at diagnosis - MSM"
-  ; histogram [CD4-count] of people with [infected? = true and aware? = true and aware-previous-quarter? = false ]          ; using the default plot pen
-  ; histogram [CD4-diagnosis] of people with [infected? = true and aware? = true and sex = 3]
-  set-current-plot-pen "<=200"
-  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and next-test > 0] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-  set-current-plot-pen "200-350"
-  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and next-test > 0] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-  set-current-plot-pen "350-500"
-  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and next-test > 0] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-  set-current-plot-pen ">500"
-  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 500 and next-test > 0] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and next-test > 0]
-
-end
-
-;to plot-CD4-diagnosis-MSM
-;  set-current-plot "CD4 count at diagnosis - MSM"
-; ; histogram [CD4-count] of people with [infected? = true and aware? = true and aware-previous-quarter? = false ]          ; using the default plot pen
-; ; histogram [CD4-diagnosis] of people with [infected? = true and aware? = true and sex = 3]
-;  set-current-plot-pen "<=200"
-;  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and index-patient? = false] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;  set-current-plot-pen "200-350"
-;  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and index-patient? = false] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;  set-current-plot-pen "350-500"
-;  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and index-patient? = false] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;  set-current-plot-pen ">500"
-;  plot count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 500 and index-patient? = false] / count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and index-patient? = false]
-;
-;end
-
-to setplot-PLWH
-  set-current-plot "People living with HIV/AIDS"
-
-end
-
-to plot-PLWH
-  set-current-plot "People living with HIV/AIDS"
-  ; histogram [CD4-count] of people with [infected? = true and aware? = true and aware-previous-quarter? = false ]          ; using the default plot pen
-  set-current-plot-pen "Heterosexual-Female"
-  plot count people with [infected? = true and dead = 0 and sex = 1]
-  set-current-plot-pen "Heterosexual-Male"
-  plot count people with [infected? = true and dead = 0 and sex = 2]
-  set-current-plot-pen "MSM"
-  plot count people with [infected? = true and dead = 0 and sex = 3]
-  set-current-plot-pen "ALL"
-  plot count people with [infected? = true and dead = 0 ]
-end
-
-to update-plot
-  set-current-plot "Transmissions"
-  set-current-plot-pen "HET-female"
-  ;plot sum [number-transmissions] of people with [infected? = true and sex <= 2 and dead = 0]
-  plot count people with [infected? = true and sex = 1 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  set-current-plot-pen "HET-male"
-  ;plot sum [number-transmissions] of people with [infected? = true and sex <= 2 and dead = 0]
-  plot count people with [infected? = true and sex = 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-
-  set-current-plot-pen "MSM"
-  ;plot sum [number-transmissions] of people with [infected? = true and sex = 3 and dead = 0]
-  plot count people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
-  set-current-plot-pen "ALL"
-  ;plot sum [number-transmissions] of people with [infected? = true and dead = 0]
-  plot count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
-  set-current-plot-pen "Trans per 10000 PLWH"
-  ;plot 10000 * sum [number-transmissions] of people with [infected? = true and dead = 0] / count people with [infected? = true and dead = 0]
-  plot 10000 * count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)] /  (count people with [infected? = true and dead = 0])
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-763
-209
-1008
-385
-20
-14
+741
+230
+954
+384
+-1
+-1
 5.0
 1
 10
@@ -1619,7 +562,7 @@ INPUTBOX
 1025
 304
 number-people
-1000
+1000.0
 1
 0
 Number
@@ -1680,12 +623,12 @@ NIL
 1
 
 INPUTBOX
-888
-307
-976
-367
+866
+328
+954
+388
 simulation-years
-151
+151.0
 1
 0
 Number
@@ -1696,7 +639,7 @@ INPUTBOX
 987
 244
 time-unit
-12
+12.0
 1
 0
 Number
@@ -1830,7 +773,7 @@ INPUTBOX
 897
 453
 num-year-trans
-14
+20.0
 1
 0
 Number
@@ -1841,7 +784,7 @@ INPUTBOX
 920
 521
 goal
-1
+1.0
 1
 0
 Number
@@ -1874,7 +817,7 @@ INPUTBOX
 1057
 73
 prep-effectiveness
-0.8
+0.0
 1
 0
 Number
@@ -1885,7 +828,7 @@ INPUTBOX
 1058
 134
 prep-cov-positive
-0
+0.0
 1
 0
 Number
@@ -1896,7 +839,7 @@ INPUTBOX
 951
 74
 prep-cov-casual
-0
+0.0
 1
 0
 Number
@@ -1907,7 +850,7 @@ INPUTBOX
 965
 135
 prep-cov-concurrent
-0
+0.0
 1
 0
 Number
@@ -1918,10 +861,44 @@ INPUTBOX
 1229
 234
 dry-run
-1
+15.0
 1
 0
 Number
+
+BUTTON
+1201
+416
+1267
+449
+Profile
+profile
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1112
+471
+1228
+504
+RunExperiment
+RunExperiment
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1934,14 +911,14 @@ This section could explain what rules the agents use to create the overall behav
 
 ## HOW TO USE IT
 
-This section could explain how to use the model, including a description of each of the items in the interface tab.
+This section could explain how to use the model, including a description of each of the items in the interface tab.  
 Initially hit "setup" button on the interface tab
 
 1. It sets up global variables by calling "setup-globals"
 	a. globals are all the data that remains the same for entire population
 
 2. It calls "setup-people"
- 	a. It generates number of people as mentioned in the "number-people" input button. Sets x% (currently 100%) of the initial people as index-patients. Which means everyone gets infected in quarter 1, i.e., tick 1 (but are un-infected in tick 0 for ease of computation).
+ 	a. It generates number of people as mentioned in the "number-people" input button. Sets x% (currently 100%) of the initial people as index-patients. Which means everyone gets infected in quarter 1, i.e., tick 1 (but are un-infected in tick 0 for ease of computation). 
 
  	b. Initializes all the variable used in the model by calling procedure "set-infected-variables"
 
@@ -1949,15 +926,15 @@ Next hit the "go" button. This begins the simulation
 
 1. For "simulation-years" updates all the variables of (dead =0, i.e, non-dead) people in the simulation by calling "update-simulation"
 
-2. Each quarter, i.e., each tick, creates new infections (currently creates new people because 100% of initial population was infected in the beginning and can be changed as needed). Number of new infections = total number of transmissions generated by all the index patients only.
+2. Each quarter, i.e., each tick, creates new infections (currently creates new people because 100% of initial population was infected in the beginning and can be changed as needed). Number of new infections = total number of transmissions generated by all the index patients only. 
 	a. This is done by calling the procedure "setup-new-transmissions [number]".
 
 	b. The procedure sets the new infections as index-patients = false and calls "set-infected-variables" to initialize the variables. From the next quarter they are included in the simulation, that is, "update-simulation" automatically applies to everyone in the simulation
 
 3. when a person dies, variable "dead = 1" but we do not assign "die" which is in-built netlogo function for permanently removing person from the simulation. This is done so that the population statistics can be collected in the end (using die erases persons data)
 
-After simulation stops hit "display-values"
-1. Displays the required data for index and transmissions separately.
+After simulation stops hit "display-values"  
+1. Displays the required data for index and transmissions separately.  
 2. For each peron, at time of death, "set-life-variables" which keeps track of life variables. When display-values is clicked the simulation is modeled to display some of these values. Note: Currently all life-variables are for index-patients ONLY. Change as needed in procedures "set-dead", "set-life-variables", and "display-values"
 
 ## THINGS TO NOTICE
@@ -2274,9 +1251,8 @@ false
 0
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
-
 @#$#@#$#@
-NetLogo 5.2.0
+NetLogo 6.0.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
@@ -2313,7 +1289,7 @@ ticks &gt; (sim-dry-run + time-unit * num-year-trans)
       <value value="0"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="experiment2" repetitions="5" runMetricsEveryStep="false">
+  <experiment name="experiment2" repetitions="1" runMetricsEveryStep="false">
     <setup>show date-and-time
 setup
 ;clear-all
@@ -2359,7 +1335,6 @@ true
 0
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
-
 @#$#@#$#@
 0
 @#$#@#$#@

@@ -7,7 +7,8 @@
 ;6. Two or more partners (at least one is main AND at least one is casual): at least one is uninfected
 
 to calcTable3
-  let count-casuals item 2 counter-partner 
+  
+  set count-casuals item 2 counter-partner 
   ;1.
  ifelse (age - age-at-infection) <= 0.09
  [

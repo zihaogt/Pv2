@@ -3,121 +3,119 @@
 
 
 to update-simulation
+  ;determine-testing
+      
+  ;;SET VALUES OF SIMULATION VARIABLES
+  set age (age + (1 / time-unit))
+  ;print "age"
+  ;print age
   
-
-      ;determine-testing
+  set infected-previous-quarter? infected?
+  ;  print "infected-previous-quarter?"
+  ; print infected-previous-quarter?
       
-      ;;SET VALUES OF SIMULATION VARIABLES
-      set age (age + (1 / time-unit))
-      ;print "age"
-      ;print age
+  set infected? true
+  ;print "infected?"
+  ;print infected?
       
-      set infected-previous-quarter? infected?
-    ;  print "infected-previous-quarter?"
-     ; print infected-previous-quarter?
+  set aware-previous-quarter? aware?
+  ;print "aware-previous-quarter?"
+  ;print aware-previous-quarter?
       
-      set infected? true
-      ;print "infected?"
-      ;print infected?
+  set-aware? 
+  ;print "aware?"
+  ;print aware?
+  set-linked-to-care?
+  
+  set prev-total-regimen total-regimen
+  ;print "prev-total-regimen"
+  ;print prev-total-regimen
       
-      set aware-previous-quarter? aware?
-      ;print "aware-previous-quarter?"
-      ;print aware-previous-quarter?
+  set-total-regimen 
+  ;print "total-regimen "
+  ;print total-regimen 
+  
+  set prev-prev-on-treatment? prev-on-treatment? 
+  set prev-on-treatment? on-treatment?
+  set-on-treatment? 
+  ;print "on-treatment?"
+  ;print on-treatment?
       
-      set-aware? 
-      ;print "aware?"
-      ;print aware?
-      set-linked-to-care?
-      set prev-total-regimen total-regimen
-      ;print "prev-total-regimen"
-      ;print prev-total-regimen
+  set prev-regimen regimen
+  set-regimen 
+  ;print "regimen"
+  ;print regimen
       
-      set-total-regimen 
-      ;print "total-regimen "
-      ;print total-regimen 
-      
-      set prev-prev-on-treatment? prev-on-treatment? 
-      set prev-on-treatment? on-treatment?
-      set-on-treatment? 
-      ;print "on-treatment?"
-      ;print on-treatment?
-      
-      set prev-regimen regimen
-      set-regimen 
-      ;print "regimen"
-      ;print regimen
-      
-      set-time-on-therapy 
-      ;print "time-on-therapy"
-      ;print time-on-therapy
-      set-viral-load
-      ;print "viral-load"
-      ;print viral-load
-      set-viral-load-stratum
-      ;print "viral-load-stratum"
-      ;print viral-load-stratum
+  set-time-on-therapy 
+  ;print "time-on-therapy"
+  ;print time-on-therapy
+  set-viral-load
+  ;print "viral-load"
+  ;print viral-load
+  set-viral-load-stratum
+  ;print "viral-load-stratum"
+  ;print viral-load-stratum
       
        
-      set prev-CD4-count  CD4-count
-      ;print "prev-CD4-count"
-      ;print prev-CD4-count
-      set-CD4-count 
-      ;print "CD4-count"
-      ;print CD4-count
-      set-CD4-stratum
-      ;print "CD4-stratum"
-      ;print CD4-stratum
+  set prev-CD4-count  CD4-count
+  ;print "prev-CD4-count"
+  ;print prev-CD4-count
+  set-CD4-count 
+  ;print "CD4-count"
+  ;print CD4-count
+  set-CD4-stratum
+  ;print "CD4-stratum"
+  ;print CD4-stratum
       
-      set prev-OI-type OI-type
-      ;print "prev-OI-type"
-      ;print prev-OI-type
-      set-OI-type
-      ;print "OI-type"
-     ; print OI-type
-      set prev-OI? OI?
-     ; print "prev-OI?"
-      ;print prev-OI?
-      set-OI? 
-     ; print "OI?"
-      ;print OI?
-      set prev-AIDS? AIDS?
-      set-AIDS? 
-     ; print "AIDS?"
-     ; print AIDS?
-      set-CD4-ART ;;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
-     ; print "CD4 ART actually started"
-     ; print CD4-ART            ;of CD4 decline might not exactly coincide with the required start
-      set-quarter-ART-start
-      ;determine-retention
-      ;print "quarter-ART-started"
-      ;print quarter-ART-start 
-      set-age-ART-start 
-     ; print "age-ART-started"
-     ; print age-ART-start
+  set prev-OI-type OI-type
+  ;print "prev-OI-type"
+  ;print prev-OI-type
+  set-OI-type
+  ;print "OI-type"
+  ; print OI-type
+  set prev-OI? OI?
+  ; print "prev-OI?"
+  ;print prev-OI?
+  set-OI? 
+  ; print "OI?"
+  ;print OI?
+  set prev-AIDS? AIDS?
+  set-AIDS? 
+  ; print "AIDS?"
+  ; print AIDS?
+  set-CD4-ART ;;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
+  ; print "CD4 ART actually started"
+  ; print CD4-ART            ;of CD4 decline might not exactly coincide with the required start
+  set-quarter-ART-start
+  ;determine-retention
+  ;print "quarter-ART-started"
+  ;print quarter-ART-start 
+  set-age-ART-start 
+  ; print "age-ART-started"
+  ; print age-ART-start
       
-      set-clinical-AIDS ;
+  set-clinical-AIDS ;      
       
+  set-death-with-ART
+  set-death-without-ART
+  set prev-dead dead
+  set-dead
       
-      set-death-with-ART
-      set-death-without-ART
-      set prev-dead dead
-      set-dead
+  set-discount-rate-factor
+  set-discounted-life
       
-      set-discount-rate-factor
-      set-discounted-life
+  set-time-diag-to-death;;CHECK IF USED
       
-      set-time-diag-to-death;;CHECK IF USED
-      
-      set-discount-factor
+  set-discount-factor
      
-      set-QALYs
-      set-discounted-QALYs
+  set-QALYs
+  set-discounted-QALYs
       
-      set-costs
-      set-discounted-costs
+  set-costs
+  set-discounted-costs
      
-      set-up-stage
-      ;set-num-partners
+  set-up-stage
+  ;set-num-partners
 ;     setup-trans-initial-ppl-HET-MSM
 ;      
 ;      set number-transmissions num-trans-One + num-trans-Two + num-trans-Casual
@@ -126,113 +124,99 @@ end
 
 to print-values
   print "age"
-      print age
+  print age  
+  
+  print "infected-previous-quarter?"
+  print infected-previous-quarter?  
+  
+  print "infected?"
+  print infected?      
       
+  print "aware-previous-quarter?"
+  print aware-previous-quarter?      
       
-      print "infected-previous-quarter?"
-      print infected-previous-quarter?
+  print "aware?"
+  print aware?     
       
+  print "prev-total-regimen"
+  print prev-total-regimen      
+      
+  print "total-regimen "
+  print total-regimen 
+      
+  print "on-treatment?"
+  print on-treatment?      
      
-      print "infected?"
-      print infected?
-      
-      
-      print "aware-previous-quarter?"
-      print aware-previous-quarter?
-      
-      
-      print "aware?"
-      print aware?
-      
-      
-      print "prev-total-regimen"
-      print prev-total-regimen
-      
-      
-      print "total-regimen "
-      print total-regimen 
-      
-      print "on-treatment?"
-      print on-treatment?
-      
+  print "regimen"
+  print regimen      
      
-      print "regimen"
-      print regimen
-      
+  print "time-on-therapy"
+  print time-on-therapy
      
-      print "time-on-therapy"
-      print time-on-therapy
-     
-      print "viral-load"
-      print viral-load
+  print "viral-load"
+  print viral-load
       
-      print "viral-load-stratum"
-      print viral-load-stratum
+  print "viral-load-stratum"
+  print viral-load-stratum      
       
-       
+  print "prev-CD4-count"
+  print prev-CD4-count
       
-      print "prev-CD4-count"
-      print prev-CD4-count
+  print "CD4-count"
+  print CD4-count
       
-      print "CD4-count"
-      print CD4-count
+  print "CD4-stratum"
+  print CD4-stratum      
       
-      print "CD4-stratum"
-      print CD4-stratum
+  print "prev-OI-type"
+  print prev-OI-type
       
+  print "OI-type"
+  print OI-type
       
-      print "prev-OI-type"
-      print prev-OI-type
+  print "prev-OI?"
+  print prev-OI?
       
-      print "OI-type"
-      print OI-type
+  print "OI?"
+  print OI?     
       
-      print "prev-OI?"
-      print prev-OI?
+  print "AIDS?"
+  print AIDS?
       
-      print "OI?"
-      print OI?
+  ;;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
+  print "CD4 ART actually started"
+  print CD4-ART            ;of CD4 decline might not exactly coincide with the required start      
       
-      
-      print "AIDS?"
-      print AIDS?
-      
-      ;;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
-      print "CD4 ART actually started"
-      print CD4-ART            ;of CD4 decline might not exactly coincide with the required start
-      
-      
-      print "quarter-ART-started"
-      print quarter-ART-start 
-      ;quarter-ART-start is month at first ART initiation. All other ART time parameters get reset when dropping out of care and reentry. This does not
+  print "quarter-ART-started"
+  print quarter-ART-start 
+  ;quarter-ART-start is month at first ART initiation. All other ART time parameters get reset when dropping out of care and reentry. This does not
 
-      print "age-ART-started"
-      print age-ART-start
+  print "age-ART-started"
+  print age-ART-start
       
-      print clinical-AIDS ;;CHECK IF USED
+  print clinical-AIDS ;;CHECK IF USED      
       
+  print death-with-ART
+  print death-without-ART
+  print prev-dead 
+  print dead
+  print discount-rate-factor
+  print discounted-life
       
-      print death-with-ART
-      print death-without-ART
-      print prev-dead 
-      print dead
-      print discount-rate-factor
-      print discounted-life
+  print time-diag-to-death;;CHECK IF USED
       
-      print time-diag-to-death;;CHECK IF USED
-      
-      print discount-factor
+  print discount-factor
      
-      print QALYs
-      print discounted-QALYs
-      print linked-to-care?
-      print costs
-      print discounted-costs
-      if index-patient?
-      [print number-transmissions]
-      
+  print QALYs
+  print discounted-QALYs
+  print linked-to-care?
+  print costs
+  print discounted-costs
+  if index-patient?
+  [print number-transmissions]   
     
-      print discount-life-if-no-HIV
+  print discount-life-if-no-HIV
+  
 end
 
 ;to set-aware? 
@@ -245,6 +229,7 @@ end
 ;end
 
 to set-aware? 
+  
   if aware? = false
   [if (infected? = true and ticks = next-test) or CD4-count < 50 or OI? = true;;gets tested 
     [ifelse stage = 2 ;tests identify HIV in non-acute phase only
@@ -254,27 +239,29 @@ to set-aware?
 ;      set age-Diag age
       set-testing-variables
       set-ART-variables
+        
       set next-test ticks
       ;set stage 3
       
       ;if index-patient? = false [print age - age-at-infection print CD4-count print ""] 
       ;if sex = 3 and age - age-at-infection > 1 [print age - age-at-infection print""]
       ]
-      [
-        update-next-test
-      ]
+      [update-next-test]
     ]
   ]
 end
 
-to set-total-regimen 
+to set-total-regimen
+  
   ifelse ((total-regimen = 0) and not on-treatment?)
   [if aware? = true and CD4-count <= CD4-to-start-ART 
     [set total-regimen ((regimen1-dur + regimen2-dur + regimen3-dur + regimen4-dur) + rebound-duration * num-regimen)
       
-     if linked-to-care? = false [set linked-to-care? true set quarter-linked-care ticks  set in-care? true]
-      set stage 6]
- 
+     if linked-to-care? = false 
+     [set linked-to-care? true set quarter-linked-care ticks set in-care? true]
+      
+      set stage 6
+    ]
   ]
   [set total-regimen total-regimen - 1
     if total-regimen < 0 
@@ -299,21 +286,21 @@ to set-regimen
   ;;10 on salvage 
   ;;40 when not suppressed
   ifelse (prev-total-regimen = 1 or regimen = 10)
-  [set regimen  10]
+  [set regimen 10]
   [ifelse total-regimen = 0 
-    [set regimen  0]
-    [set regimen  40
-    ifelse regimen1-dur > 0 and (total-regimen > regimen2-dur + regimen3-dur + regimen4-dur + (num-regimen) * rebound-duration)
-         [set regimen  1]
-         [ifelse regimen2-dur > 0 and (total-regimen > regimen3-dur + regimen4-dur + (num-regimen - 1) * rebound-duration) and (total-regimen <= regimen4-dur + regimen3-dur + regimen2-dur + (num-regimen - 1)  * rebound-duration)
-           [set regimen  2]
-           [ifelse regimen3-dur > 0 and (total-regimen > regimen4-dur + (num-regimen - 2) * rebound-duration) and (total-regimen <= regimen4-dur + regimen3-dur + (num-regimen - 2) *  rebound-duration)
-             [set regimen  3]
-             [if regimen4-dur > 0 and total-regimen <= regimen4-dur + (num-regimen - 3) * rebound-duration
-               [set regimen 4]
-             ]
-           ]
-         ]
+    [set regimen 0]
+    [set regimen 40
+      ifelse regimen1-dur > 0 and (total-regimen > regimen2-dur + regimen3-dur + regimen4-dur + (num-regimen) * rebound-duration)
+      [set regimen 1]
+      [ifelse regimen2-dur > 0 and (total-regimen > regimen3-dur + regimen4-dur + (num-regimen - 1) * rebound-duration) and (total-regimen <= regimen4-dur + regimen3-dur + regimen2-dur + (num-regimen - 1)  * rebound-duration)
+        [set regimen 2]
+        [ifelse regimen3-dur > 0 and (total-regimen > regimen4-dur + (num-regimen - 2) * rebound-duration) and (total-regimen <= regimen4-dur + regimen3-dur + (num-regimen - 2) *  rebound-duration)
+          [set regimen 3]
+          [if regimen4-dur > 0 and total-regimen <= regimen4-dur + (num-regimen - 3) * rebound-duration
+            [set regimen 4]
+          ]
+        ]
+      ]
     ]
   ]
          
@@ -325,133 +312,259 @@ end
 
 
 to set-time-on-therapy 
+  
   ifelse regimen > 0 and prev-regimen = regimen 
   [set time-on-therapy time-on-therapy + 1]
   [set time-on-therapy 1]
    ;print "time-on-therapy"
    ;print time-on-therapy
+  
 end
 
 to set-viral-load 
-   if regimen = 0 [set viral-load trunc-normal-random-number viral-load-setpoint 0.255 4 5]
-  if regimen = 1 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
-  if regimen = 2 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
-  if regimen = 3 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
-  if regimen = 4 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
-  if regimen = 40 [set viral-load trunc-normal-random-number viral-load-rebound 0.357 3.1 4.5]
-  if regimen = 10 [set viral-load (trunc-normal-random-number viral-load-setpoint 0.255 4 5) + (trunc-normal-random-number viral-load-salvage-add 0.383 0 1.5)]
-  if AIDS? and regimen = 10 [set viral-load (trunc-normal-random-number viral-load-setpoint 0.255 4 5) + (trunc-normal-random-number viral-load-salvage-AIDS-add 0.383 0 1.5)] 
   
-  if age - age-at-infection <= (3 / 12) [set viral-load trunc-normal-random-number viral-load-acute 0.459 4.4 6.2]
- 
+  ifelse dead = 1 or not infected?
+  [set viral-load 0]
+  [ifelse age - age-at-infection <= (3 / 12) 
+    [set viral-load trunc-normal-random-number viral-load-acute 0.459 4.4 6.2]
+    [ifelse regimen = 0 
+      [set viral-load trunc-normal-random-number viral-load-setpoint 0.255 4 5]
+      [ifelse regimen = 1 
+        [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+        [ifelse regimen = 2 
+          [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+          [ifelse regimen = 3 
+            [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+            [ifelse regimen = 4 
+              [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+              [ifelse regimen = 40 
+                [set viral-load trunc-normal-random-number viral-load-rebound 0.357 3.1 4.5]      
+                [if regimen = 10
+                  [ifelse AIDS?
+                    [set viral-load (trunc-normal-random-number viral-load-setpoint 0.255 4 5) + (trunc-normal-random-number viral-load-salvage-AIDS-add 0.383 0 1.5)] 
+                    [set viral-load (trunc-normal-random-number viral-load-setpoint 0.255 4 5) + (trunc-normal-random-number viral-load-salvage-add 0.383 0 1.5)]
+                  ]   
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+
+  ;if regimen = 0 [set viral-load trunc-normal-random-number viral-load-setpoint 0.255 4 5]
+  ;if regimen = 1 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+  ;if regimen = 2 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+  ;if regimen = 3 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+  ;if regimen = 4 [set viral-load trunc-normal-random-number viral-load-suppressed 0.434 1 2.7]
+  ;if regimen = 40 [set viral-load trunc-normal-random-number viral-load-rebound 0.357 3.1 4.5]i
+  ;if regimen = 10 [set viral-load (trunc-normal-random-number viral-load-setpoint 0.255 4 5) + (trunc-normal-random-number viral-load-salvage-add 0.383 0 1.5)]
+  ;if AIDS? and regimen = 10 [set viral-load (trunc-normal-random-number viral-load-setpoint 0.255 4 5) + (trunc-normal-random-number viral-load-salvage-AIDS-add 0.383 0 1.5)] 
   
-  if dead = 1 or not infected? [set viral-load 0]
+  ;if age - age-at-infection <= (3 / 12) [set viral-load trunc-normal-random-number viral-load-acute 0.459 4.4 6.2] 
+  
+  ;if dead = 1 or not infected? [set viral-load 0]
+  
   ;print dead
   
   ;print "viral load"
   ;print viral-load
+  
 end
 
 to set-viral-load-stratum
-  set viral-load-stratum 6
-  if (10 ^ viral-load) <= 40000 [set viral-load-stratum 5]
-  if (10 ^ viral-load) <= 30000 [set viral-load-stratum 4]
-  if (10 ^ viral-load) <= 10000 [set viral-load-stratum 3]
-  if (10 ^ viral-load) <= 3000 [set viral-load-stratum 2]
-  if (10 ^ viral-load) <= 2000 [set viral-load-stratum 1]
-  if (10 ^ viral-load) <= 500 [set viral-load-stratum 0]
+  
+  let viral-load-power 10 ^ viral-load
+  
+  ifelse viral-load-power <= 500 
+  [set viral-load-stratum 0]
+  [ifelse viral-load-power <= 2000
+    [set viral-load-stratum 1]
+    [ifelse viral-load-power <= 3000
+      [set viral-load-stratum 2]
+      [ifelse viral-load-power <= 10000
+        [set viral-load-stratum 3]
+        [ifelse viral-load-power <= 30000
+          [set viral-load-stratum 4]
+          [ifelse viral-load-power <= 40000
+            [set viral-load-stratum 5]
+            [set viral-load-stratum 6]
+          ]
+        ]
+      ]
+    ]    
+  ]
+  
+;  set viral-load-stratum 6
+;  if (10 ^ viral-load) <= 40000 [set viral-load-stratum 5]
+;  if (10 ^ viral-load) <= 30000 [set viral-load-stratum 4]
+;  if (10 ^ viral-load) <= 10000 [set viral-load-stratum 3]
+;  if (10 ^ viral-load) <= 3000 [set viral-load-stratum 2]
+;  if (10 ^ viral-load) <= 2000 [set viral-load-stratum 1]
+;  if (10 ^ viral-load) <= 500 [set viral-load-stratum 0]
  
 end
+
 ;;;;;;;;;;;;;;;;;;;PROCEDURES RELATED TO SETTING CD4 COUNT  
 to set-CD4-count 
-  set-CD4-change
- let summ prev-CD4-count + CD4-change
- set CD4-count  0
- If summ > 0  [set CD4-count summ]
- set-CD4-max
- let cmax CD4-max
- If summ > cmax and CD4-ART > 0 [set CD4-count  cmax]
- If dead = 1 [set CD4-count 0]
- 
-; if regimen = 10
-; [print CD4-change]
- 
+  
+  ifelse dead = 1
+  [set CD4-count 0]
+  [set-CD4-change
+    let summ prev-CD4-count + CD4-change
+    ifelse summ <= 0
+    [set CD4-count 0]
+    [set-CD4-max   
+      ifelse summ > CD4-max and CD4-ART > 0
+      [set CD4-count CD4-max]
+      [set CD4-count summ]
+    ]
+  ]
+  
+;  set-CD4-change
+;  
+;  let summ prev-CD4-count + CD4-change
+;  set CD4-count  0
+;  If summ > 0  
+;  [set CD4-count summ]
+;  
+;  set-CD4-max
+;  let cmax CD4-max
+;  If summ > cmax and CD4-ART > 0 [set CD4-count  cmax]
+;  If dead = 1 [set CD4-count 0]
+  
+  ; if regimen = 10
+  ; [print CD4-change]
+  
 end  
   
-     to set-CD4-change
-         
-      Ifelse dead = 1 Or not infected? 
-       [set CD4-change 0]
-       [ifelse aware? 
-         [ifelse regimen = 1 or regimen = 2 or regimen = 3 or regimen = 4
-           [ifelse time-on-therapy <= 6 * time-unit / 12 ;; upto 6 months 
-             [set CD4-change CD4-increment-1]
-             [ifelse time-on-therapy <= 36 * time-unit / 12  ;; upto 36 months
-               [set CD4-change CD4-increment-2] 
-               [set CD4-change CD4-increment-3] 
-             ] 
-           if on-treatment? = false [print "error in CD4-change "]    
-           ]
-           
-           [
-             let mean-val (item viral-load-stratum CD4-decline * 12 / time-unit) 
-             let std-val (item viral-load-stratum CD4-decline-std-month * 12 / time-unit)
-             let min-val (item viral-load-stratum CD4-decline-lower-bound-month * 12 / time-unit)
-             let max-val (item viral-load-stratum CD4-decline-upper-bound-month * 12 / time-unit)
-             set CD4-change (trunc-normal-random-number mean-val std-val min-val max-val) 
-             
-             ;set CD4-change (item viral-load-stratum CD4-decline * 12 / time-unit )
-           ]
-           
-         ]
-         
-         [
-           let mean-val (item viral-load-stratum CD4-decline * 12 / time-unit)
-             let std-val (item viral-load-stratum CD4-decline-std-month * 12 / time-unit)
-             let min-val (item viral-load-stratum CD4-decline-lower-bound-month  * 12 / time-unit)
-             let max-val (item viral-load-stratum CD4-decline-upper-bound-month * 12 / time-unit)
-             set CD4-change (trunc-normal-random-number mean-val std-val min-val max-val) 
-           ;set CD4-change (item viral-load-stratum CD4-decline * 12 / time-unit )
-         ]
-       
-        ]
+to set-CD4-change
+  
+  ifelse dead = 1 or not infected? 
+  [set CD4-change 0]
+  [ifelse aware? and regimen >= 1 and regimen <= 4
+    [ifelse time-on-therapy <= 6 * time-unit / 12 ;; upto 6 months 
+      [set CD4-change CD4-increment-1]
+      [ifelse time-on-therapy <= 36 * time-unit / 12  ;; upto 36 months
+        [set CD4-change CD4-increment-2] 
+        [set CD4-change CD4-increment-3] 
+      ] 
+      if on-treatment? = false 
+      [print "error in CD4-change "]    
+    ]
+    [let mean-val (item viral-load-stratum CD4-decline)
+      let std-val (item viral-load-stratum CD4-decline-std-month)
+      let min-val (item viral-load-stratum CD4-decline-lower-bound-month)
+      let max-val (item viral-load-stratum CD4-decline-upper-bound-month)
+      set CD4-change (trunc-normal-random-number mean-val std-val min-val max-val) 
+      ;set CD4-change (item viral-load-stratum CD4-decline * 12 / time-unit )
+    ]       
+  ]
+  
+;  ifelse dead = 1 or not infected? 
+;  [set CD4-change 0]
+;  [ifelse aware? 
+;    [ifelse regimen <= 4 and regimen >= 1
+;      [ifelse time-on-therapy <= 6 * time-unit / 12 ;; upto 6 months 
+;        [set CD4-change CD4-increment-1]
+;        [ifelse time-on-therapy <= 36 * time-unit / 12  ;; upto 36 months
+;          [set CD4-change CD4-increment-2] 
+;          [set CD4-change CD4-increment-3] 
+;        ] 
+;        if on-treatment? = false 
+;        [print "error in CD4-change "]    
+;      ]
+;      [let mean-val (item viral-load-stratum CD4-decline * 12 / time-unit) 
+;        let std-val (item viral-load-stratum CD4-decline-std-month * 12 / time-unit)
+;        let min-val (item viral-load-stratum CD4-decline-lower-bound-month * 12 / time-unit)
+;        let max-val (item viral-load-stratum CD4-decline-upper-bound-month * 12 / time-unit)
+;        set CD4-change (trunc-normal-random-number mean-val std-val min-val max-val)
+;        ;set CD4-change (item viral-load-stratum CD4-decline * 12 / time-unit )
+;      ]
+;    ] 
+;    [let mean-val (item viral-load-stratum CD4-decline * 12 / time-unit)
+;      let std-val (item viral-load-stratum CD4-decline-std-month * 12 / time-unit)
+;      let min-val (item viral-load-stratum CD4-decline-lower-bound-month  * 12 / time-unit)
+;      let max-val (item viral-load-stratum CD4-decline-upper-bound-month * 12 / time-unit)
+;      set CD4-change (trunc-normal-random-number mean-val std-val min-val max-val) 
+;      ;set CD4-change (item viral-load-stratum CD4-decline * 12 / time-unit )
+;    ]
+;       
+;  ]
          
         ;print viral-load
         ;print 10 ^ viral-load
         ;print viral-load-stratum
         ;print item viral-load-stratum CD4-decline-per-quarter  
       
-     end
+end
      
-     to set-CD4-max
-       set CD4-max item 0 CD4-max-levels 
-       If CD4-ART <= 500 [set CD4-max item 1 CD4-max-levels]
-       If CD4-ART <= 350 [set CD4-max item 2 CD4-max-levels]
-       If CD4-ART <= 200 [set CD4-max item 3 CD4-max-levels]
-       If CD4-ART < 50 [set CD4-max item 4 CD4-max-levels]
+to set-CD4-max
+  
+  ifelse CD4-ART < 50
+  [set CD4-max item 4 CD4-max-levels]
+  [ifelse CD4-ART <= 200
+    [set CD4-max item 3 CD4-max-levels]
+    [ifelse CD4-ART <= 350
+      [set CD4-max item 2 CD4-max-levels]
+      [ifelse CD4-ART <= 500
+        [set CD4-max item 1 CD4-max-levels]
+        [set CD4-max item 0 CD4-max-levels]
+      ]
+    ]
+  ]
+ 
+;  set CD4-max item 0 CD4-max-levels 
+;  
+;  If CD4-ART <= 500 [set CD4-max item 1 CD4-max-levels]
+;  If CD4-ART <= 350 [set CD4-max item 2 CD4-max-levels]
+;  If CD4-ART <= 200 [set CD4-max item 3 CD4-max-levels]
+;  If CD4-ART < 50 [set CD4-max item 4 CD4-max-levels]
+      
+  ;print CD4-ART
+  ;print CD4-max
        
-       
-       
-       ;print CD4-ART
-       ;print CD4-max
-       
-     end
+end
 ;;;;;;;;;;;;;;;;;;;PROCEDURES RELATED TO SETTING CD4 COUNT  
 
 
 to set-CD4-stratum
-  ifelse dead = 1 
+  
+  ifelse dead = 1
   [set CD4-stratum 0]
-  [set CD4-stratum 1
-    if CD4-count >= item 1 CD4count-stratum [set CD4-stratum 2]
-    if CD4-count >= item 2 CD4count-stratum [set CD4-stratum 3]
-    if CD4-count >= item 3 CD4count-stratum [set CD4-stratum 4]
-    if CD4-count >= item 4 CD4count-stratum [set CD4-stratum 5]
-    if CD4-count >= item 5 CD4count-stratum [set CD4-stratum 6]
+  [ifelse CD4-count >= item 5 CD4count-stratum
+    [set CD4-stratum 6]
+    [ifelse CD4-count >= item 4 CD4count-stratum
+      [set CD4-stratum 5]
+      [ifelse CD4-count >= item 3 CD4count-stratum
+        [set CD4-stratum 4]
+        [ifelse CD4-count >= item 2 CD4count-stratum
+          [set CD4-stratum 3]
+          [ifelse CD4-count >= item 1 CD4count-stratum
+            [set CD4-stratum 2]
+            [set CD4-stratum 1]
+          ]
+        ]
+      ]
+    ]
   ]
+
+  
+;  ifelse dead = 1 
+;  [set CD4-stratum 0]
+;  [set CD4-stratum 1
+;    if CD4-count >= item 1 CD4count-stratum [set CD4-stratum 2]
+;    if CD4-count >= item 2 CD4count-stratum [set CD4-stratum 3]
+;    if CD4-count >= item 3 CD4count-stratum [set CD4-stratum 4]
+;    if CD4-count >= item 4 CD4count-stratum [set CD4-stratum 5]
+;    if CD4-count >= item 5 CD4count-stratum [set CD4-stratum 6]
+;  ]
+  
 end
 
 to set-OI-type
+  
   ifelse dead = 1 
   [set OI-type 0]
   [
@@ -471,7 +584,7 @@ to set-OI-type
    ; print randnum
 ;   if OI-type > 0
 ;    [print CD4-count
-;    print CD4-stratum 
+;    print CD4-stratum s
 ;    print (item (CD4-stratum - 1) (item (OI-type - 1)   OI-probabilities) ) 
 ;    print OI-type
 ;    print""]
@@ -535,34 +648,56 @@ to set-age-ART-start
    ]
 end
       
-to      set-clinical-AIDS ;;CHECK IF USED
+to set-clinical-AIDS ;;CHECK IF USED
+  
   ifelse OI-type > 0 
   [set clinical-AIDS 2]
   [set clinical-AIDS 1]
+  
 end      
       
-to   set-death-with-ART
+to set-death-with-ART
   
-   let prob-death-with-ART 0
-   let CD4-index  6
-   If CD4-ART < 350 [set CD4-index  5]
-   If CD4-ART < 200 [set CD4-index 4]
-   If CD4-ART < 100 [set CD4-index 3]
-   If CD4-ART < 50 [set CD4-index 2]
-   If CD4-ART < 25 [set CD4-index 1]
+  let prob-death-with-ART 0
+  let CD4-index 6
+  
+  ifelse CD4-ART < 25
+  [set CD4-index 1]
+  [ifelse CD4-ART < 50
+    [set CD4-index 2]
+    [ifelse CD4-ART < 100
+      [set CD4-index 3]
+      [ifelse CD4-ART < 200
+        [set CD4-index 4]
+        [if CD4-ART < 350
+          [set CD4-index 5]
+        ]
+      ]
+    ]
+  ]
+  
+  let age-index 4
+  
+  ifelse age-ART-start < 30
+  [set age-index 1]
+  [ifelse age-ART-start < 40
+    [set age-index 2]
+    [if age-ART-start < 50
+      [set age-index 3]
+    ]
+  ]
    
-   let age-index 4
-   If age-ART-start < 50 [set age-index 3]
-   If age-ART-start < 40 [set age-index 2]
-   If age-ART-start < 30 [set age-index 1]
-   
-   If sexual-Transmission? And clinical-AIDS = 1 [set prob-death-with-ART (item (CD4-index - 1) (item (age-index - 1) death-prob-sexual-no-AIDS)) ]
-   If sexual-Transmission? And clinical-AIDS = 2 [set prob-death-with-ART item (CD4-index - 1) (item (age-index - 1) death-prob-sexual-AIDS) ]
-   If not sexual-Transmission? And clinical-AIDS = 1 [set prob-death-with-ART item (CD4-index - 1) (item (age-index - 1) death-prob-idu-no-AIDS) ]
-   If not sexual-Transmission? And clinical-AIDS = 2 [set prob-death-with-ART item (CD4-index - 1) (item (age-index - 1) death-prob-idu-AIDS) ]
-   
-   If CD4-ART = 0 [set prob-death-with-ART  0]
-   set death-with-ART rate-to-prob (prob-to-rate (prob-death-with-ART / 100) 5) (1 / time-unit)
+  If sex <= 3 and clinical-AIDS = 1 
+  [set prob-death-with-ART (item (CD4-index - 1) (item (age-index - 1) death-prob-sexual-no-AIDS))]
+  If sex <= 3 and clinical-AIDS = 2 
+  [set prob-death-with-ART item (CD4-index - 1) (item (age-index - 1) death-prob-sexual-AIDS)]
+  If sex >= 4 and clinical-AIDS = 1 
+  [set prob-death-with-ART item (CD4-index - 1) (item (age-index - 1) death-prob-idu-no-AIDS)]
+  If sex >= 4 and clinical-AIDS = 2 
+  [set prob-death-with-ART item (CD4-index - 1) (item (age-index - 1) death-prob-idu-AIDS)]
+  
+  If CD4-ART = 0 [set prob-death-with-ART 0]
+  set death-with-ART rate-to-prob (prob-to-rate (prob-death-with-ART / 100) 5) (1 / time-unit)
    
 ;   if quarter-ART-start > 0
 ;  [print ""
@@ -570,52 +705,68 @@ to   set-death-with-ART
 ;  print CD4-count
 ;   print age]
    
-   
    ;m_risk2 = ratetoprob(probtorate(mrisk2 / 100, 5), 0.25)
-
+  
 end
 
-            ;;Function ratetoprob(rate, time)
-            ;;Converts a rate, such as deaths per year, into a probability,
-            ;;such as the probability of any single patient dying in any given year.
-            ;;   Formula: 1 - e -rate*time
-            to-report rate-to-prob [rate time]
-            report 1 - Exp (- rate * time)
-            end
-            
-            ;Function probtorate (prob, time)
-            ;'Converts a probability, such as the probability of any single patient dying
-            ;'in any given year, into a rate, such as deaths per year.
-            ;'Formula:     -Ln (1 - Prob) / time
-            to-report prob-to-rate [prob time]
-              report (- ln (1 - prob) / time)
-            end
+;;Function ratetoprob(rate, time)
+;;Converts a rate, such as deaths per year, into a probability,
+;;such as the probability of any single patient dying in any given year.
+;;   Formula: 1 - e -rate*time
+to-report rate-to-prob [rate time]
+  
+  report 1 - Exp (- rate * time)
+  
+end
 
-to      set-death-without-ART
+;Function probtorate (prob, time)
+;'Converts a probability, such as the probability of any single patient dying
+;'in any given year, into a rate, such as deaths per year.
+;'Formula:     -Ln (1 - Prob) / time
+to-report prob-to-rate [prob time]
+  
+  report (- ln (1 - prob) / time)
+  
+end
+
+to set-death-without-ART
       ; Function m_risk1(cd42, idu)
      ;;' Reference
      ;' CHIC paper, AIDS 2007, vol 21 no 13
      ;;
-     let rate-death-without-ART 0
+  let rate-death-without-ART 0
      
-     Ifelse sexual-transmission? = true
-     [ set rate-death-without-ART item 0 death-rate-no-ART-sexual
-       If CD4-count >= 50  [set rate-death-without-ART item 1 death-rate-no-ART-sexual]
-       If CD4-count >= 200 [set rate-death-without-ART item 2 death-rate-no-ART-sexual]
-       If CD4-count >= 350 [set rate-death-without-ART item 3 death-rate-no-ART-sexual]
-       If CD4-count >= 500 [set rate-death-without-ART item 4 death-rate-no-ART-sexual]
-       If CD4-count >= 650 [set rate-death-without-ART item 5 death-rate-no-ART-sexual]
-     ]
-     [  set rate-death-without-ART item 0 death-rate-no-ART-idu
-       If CD4-count >= 200 [set rate-death-without-ART item 1 death-rate-no-ART-idu]
-       If CD4-count >= 350 [set rate-death-without-ART item 2 death-rate-no-ART-idu]
-     ]
+  Ifelse sex <= 3
+  [ifelse CD4-count >= 650
+    [set rate-death-without-ART item 5 death-rate-no-ART-sexual]
+    [ifelse CD4-count >= 500
+      [set rate-death-without-ART item 4 death-rate-no-ART-sexual]
+      [ifelse CD4-count >= 350
+        [set rate-death-without-ART item 3 death-rate-no-ART-sexual]
+        [ifelse CD4-count >= 200
+          [set rate-death-without-ART item 2 death-rate-no-ART-sexual]
+          [ifelse CD4-count >= 50
+            [set rate-death-without-ART item 1 death-rate-no-ART-sexual]
+            [set rate-death-without-ART item 0 death-rate-no-ART-sexual]
+          ]
+        ]
+      ]
+    ]
+  ]
+  [ifelse CD4-count >= 350 
+    [set rate-death-without-ART item 2 death-rate-no-ART-idu]
+    [ifelse CD4-count >= 200
+      [set rate-death-without-ART item 1 death-rate-no-ART-idu]
+      [set rate-death-without-ART item 0 death-rate-no-ART-idu]
+    ]
+  ]
        
-     set   death-without-ART rate-to-prob (rate-death-without-ART) (1 / time-unit)
+  set death-without-ART rate-to-prob (rate-death-without-ART) (1 / time-unit)
 
 end
 
-to      set-dead 
+to set-dead 
+  
   let prob-dead 0
   ifelse on-treatment? = true 
   [set prob-dead death-with-ART]
@@ -643,101 +794,119 @@ to      set-dead
     ;print prev-CD4-count
     ;print CD4-count
    ; die
-    ]
+  ]
   [
-   ; die
-   ]
+    ; die
+  ]
   
   
 end
 
 to set-life-variables
- set life-with-infection (age  - age-at-infection)
- set disc-life-lost-to-infection (discount-life-if-no-HIV - discounted-life)
- set disc-QALYs-lost (discount-life-if-no-HIV - discounted-QALYs)
- 
+  
+  set life-with-infection (age - age-at-infection)
+  set disc-life-lost-to-infection (discount-life-if-no-HIV - discounted-life)
+  set disc-QALYs-lost (discount-life-if-no-HIV - discounted-QALYs)
 
  ;; Get time on ART for those who did not die before start of treatment
- ifelse quarter-ART-start > 0
- [set time-on-ART (ticks - quarter-ART-start)]
- [set time-on-ART 0]
+  ifelse quarter-ART-start > 0
+  [set time-on-ART (ticks - quarter-ART-start)]
+  [set time-on-ART 0]
  
+  ;; Get time on salvage therapy for those who were on therapy
+  set time-on-salvage (time-on-ART - (regimen1-dur + regimen2-dur + regimen3-dur + regimen4-dur + num-regimen)) 
+  if time-on-salvage < 0
+  [set time-on-salvage 0]
  
- ;; Get time on salvage therapy for those who were on therapy
- set time-on-salvage (time-on-ART - (regimen1-dur + regimen2-dur + regimen3-dur + regimen4-dur + num-regimen)) 
- if time-on-salvage < 0
- [set time-on-salvage 0]
+  ifelse (age - age-at-infection) >= non-AIDS-death / time-unit
+  [set no-life-lost-from-infection? true]
+  [set no-life-lost-from-infection? false]
  
+  set life-lost-to-infection (non-AIDS-death / time-unit) - (age - age-at-infection)
  
- ifelse (age - age-at-infection) >= non-AIDS-death / time-unit
- [set no-life-lost-from-infection? true ]
- [set no-life-lost-from-infection? false]
+  ifelse prev-CD4-count = 0
+  [set die-from-CD40? true]
+  [set die-from-CD40? false]
  
- set life-lost-to-infection (non-AIDS-death / time-unit) - (age - age-at-infection)
- 
- ifelse prev-CD4-count = 0
- [set die-from-CD40? true]
- [set die-from-CD40? false]
- 
- ;;Following can be obtained directly (see procedure display-values). This is for cross-check.
+  ;;Following can be obtained directly (see procedure display-values). This is for cross-check.
   if dead = 1 and prev-dead = 0 and index-patient?
-       [
-       set population-time-on-salvage population-time-on-salvage + (time-on-salvage / time-unit)
-       set population-time-on-ART population-time-on-ART + (time-on-ART / time-unit)
-       set population-life-with-infection population-life-with-infection + (life-with-infection)
-       
-       if time-on-salvage = 0 [set zero-on-salvage zero-on-salvage + 1]
-       if no-life-lost-from-infection?
-       [set population-no-life-lost-from-infection population-no-life-lost-from-infection + 1]
-       if die-from-CD40?
-       [set population-die-from-CD4-zero population-die-from-CD4-zero + 1]
-       ]
+  [set population-time-on-salvage population-time-on-salvage + (time-on-salvage / time-unit)
+    set population-time-on-ART population-time-on-ART + (time-on-ART / time-unit)
+    set population-life-with-infection population-life-with-infection + (life-with-infection)
+    
+    if time-on-salvage = 0 [set zero-on-salvage zero-on-salvage + 1]
+    
+    if no-life-lost-from-infection?
+    [set population-no-life-lost-from-infection population-no-life-lost-from-infection + 1]
+    
+    if die-from-CD40?
+    [set population-die-from-CD4-zero population-die-from-CD4-zero + 1]
+  ]
    
 end
 
-to      set-discount-rate-factor
+to set-discount-rate-factor
+  
   set discount-rate-factor (1 + discount-rate) ^ floor((ticks - t-start - 1) / time-unit)
+  
 end
 
-to       set-discounted-life
+to set-discounted-life
+  
   set discounted-life (discounted-life + ((1 - dead) / discount-rate-factor))
+  
+end
+      
+to set-time-diag-to-death;;CHECK IF USED
+  
+  ifelse aware? and dead = 0 
+  [set time-diag-to-death 1]
+  [set time-diag-to-death 0]
   
 end
 
       
-to      set-time-diag-to-death;;CHECK IF USED
-  ifelse aware? and dead = 0 
-  [set time-diag-to-death 1]
-  [set time-diag-to-death 0]
-end
-
-      
-to      set-discount-factor
+to set-discount-factor
+  
   ifelse ticks = 0 
   [set discount-factor 1]
   [if not aware-previous-quarter? and aware?
     [set discount-factor discount-rate-factor]
   ]
+  
 end
 
-
-
-to      set-QALYs
+to set-QALYs
 ;;  Function tengs_qalys(cd4, oi, oi_indicator, dead, infected)
 
 ;;'Intercept 0.702
 ;;'aids 0
 ;;'Symptomatic HIV 0.116
 ;;'Asymptomatic HIV 0.233
-
-If CD4-count < 200 [set QALYs  0.702]
-If CD4-count <= 350 And CD4-count > 200 [set QALYs 0.818]
-If CD4-count > 350 [set QALYs  0.935]
-If OI-type > 0 [set QALYs  0.702]
-
-If not infected? [set QALYs 1]
-If dead = 1 [set QALYs  0]
-set sum-QALYS sum-QALYS + QALYs
+  
+  ifelse dead = 1
+  [set QALYs 0]
+  [ifelse not infected?
+    [set QALYs 1]
+    [ifelse CD4-count < 200 or OI-type > 0
+      [set QALYs 0.702]
+      [ifelse CD4-count <= 350
+        [set QALYs 0.818]
+        [set QALYs 0.935]
+      ]
+    ]
+  ]
+  
+;  If CD4-count < 200 [set QALYs  0.702]
+;  If CD4-count <= 350 And CD4-count > 200 [set QALYs 0.818]
+;  If CD4-count > 350 [set QALYs  0.935]
+;  If OI-type > 0 [set QALYs  0.702]
+;
+;  If not infected? [set QALYs 1]
+;  If dead = 1 [set QALYs  0]
+  
+  set sum-QALYS sum-QALYS + QALYs
+  
 end
 
 ;The below was needed only when was set-up as original PATH model. Here keeps track of everything only from time of infection
@@ -754,113 +923,136 @@ end
 ; ; print sum-QALYs
 ;end
 
-
-to      set-discounted-QALYs
+to set-discounted-QALYs
+  
   set discounted-QALYs (discounted-QALYs + QALYs / discount-rate-factor)
   set TOTAL-QALYs TOTAL-QALYs + discounted-QALYs
  
 end
 
 to set-linked-to-care?
+  
   if not linked-to-care?
-  [ if CD4-count <= CD4-at-care or stage >= 4 
+  [if CD4-count <= CD4-at-care or stage >= 4 
     [set linked-to-care? true
       set quarter-linked-care ticks
       set in-care? true
       set stage 4
-      ]
+    ]
   ]
   
 end
 
+
+
+to set-costs
   
-to      set-costs
-    let CD4-index 4
-  if CD4-count < 501 [set CD4-index 3]
-  if CD4-count < 351 [set CD4-index 2]
-  if CD4-count < 201 [set CD4-index 1]
-  if CD4-count < 51 [set CD4-index 0]
+  let CD4-index 4
   
- ifelse not infected? or dead = 1
-    [set costs 0
-      set util-cost 0
-      set regimen-cost-quarter 0
-       set oi-cost-quarter 0
-        set care-service-cost 0
-        set test-cost 0 
-      ] 
-    [ set util-cost 0
-     Ifelse stage >= 4
-         [;set util-cost (item (CD4-index) HIV-utilization-cost + item (CD4-index) non-HIV-med-cost ) * 12 / time-unit  
-         
-          set util-cost normal-random-number (item (CD4-index) HIV-utilization-cost + item (CD4-index) non-HIV-med-cost)  (item (CD4-index) std-in-care-cost)
-         
-        ]
-        [ ;set util-cost (item (CD4-index) non-HIV-med-cost) * 12 / time-unit  
-          set util-cost normal-random-number (item (CD4-index) non-HIV-med-cost) (item (CD4-index) std-not-in-care-cost)
-          ]
+  ifelse CD4-count < 51
+  [set CD4-index 0]
+  [ifelse CD4-count < 201
+    [set CD4-index 1]
+    [ifelse CD4-count < 351
+      [set CD4-index 2]
+      [if CD4-count < 501
+        [set CD4-index 3]
+      ]
+    ]    
+  ]
+  
+;  let CD4-index 4
+;  if CD4-count < 501 [set CD4-index 3]
+;  if CD4-count < 351 [set CD4-index 2]
+;  if CD4-count < 201 [set CD4-index 1]
+;  if CD4-count < 51 [set CD4-index 0]
+  
+  ifelse not infected? or dead = 1
+  [set costs 0
+    set util-cost 0
+    set regimen-cost-quarter 0
+    set oi-cost-quarter 0
+    set care-service-cost 0
+    set test-cost 0 
+  ] 
+  [set util-cost 0
+    
+    ifelse stage >= 4
+    [;set util-cost (item (CD4-index) HIV-utilization-cost + item (CD4-index) non-HIV-med-cost ) * 12 / time-unit  
+      set util-cost normal-random-number (item (CD4-index) HIV-utilization-cost + item (CD4-index) non-HIV-med-cost) (item (CD4-index) std-in-care-cost)
+    ]
+    [;set util-cost (item (CD4-index) non-HIV-med-cost) * 12 / time-unit  
+      set util-cost normal-random-number (item (CD4-index) non-HIV-med-cost) (item (CD4-index) std-not-in-care-cost)
+    ]
         
-     set regimen-cost-quarter 0
-     ifelse regimen = 1 or regimen = 2 or regimen = 3 or regimen = 4
-     [set regimen-cost-quarter  (item regimen regimen-cost) * 12 / time-unit  ] 
-     [ifelse regimen = 10
-       [set regimen-cost-quarter (item 5 regimen-cost) * 12 / time-unit  ]
-       [if regimen = 40
-         [ ifelse prev-regimen = 40
-           [set regimen-cost-quarter (item 2 regimen-cost) * 12 / time-unit  ]
-           [set regimen-cost-quarter (item prev-regimen regimen-cost) * 12 / time-unit  ]
-         ]
-       ]
-     ]
+    set regimen-cost-quarter 0
+    
+    ifelse regimen <= 4 and regimen >= 1
+    [set regimen-cost-quarter (item regimen regimen-cost) * 12 / time-unit] 
+    [ifelse regimen = 10
+      [set regimen-cost-quarter (item 5 regimen-cost) * 12 / time-unit]
+      [if regimen = 40
+        [ifelse prev-regimen = 40
+          [set regimen-cost-quarter (item 2 regimen-cost) * 12 / time-unit]
+          [set regimen-cost-quarter (item prev-regimen regimen-cost) * 12 / time-unit]
+        ]
+      ]
+    ]
       
     set oi-cost-quarter 0
+    
     if OI-type > 0
-    [set oi-cost-quarter (item (OI-type - 1) OI-cost) * 12 / time-unit  ]
+    [set oi-cost-quarter (item (OI-type - 1) OI-cost) * 12 / time-unit]
     
     let geno-cost 0
-    if regimen = 1 or regimen = 2 or regimen = 3 or regimen = 4
+    
+    if regimen <= 4 and regimen >= 1
     [if regimen != prev-regimen
       [set geno-cost HIV-genotype-test-cost]
     ]
     
    ; let cd4-rna-cost 0
-   set care-service-cost 0
+    set care-service-cost 0
+    
     if stage >= 4
-    [set care-service-cost (retention-care-cost + (cd4+rna-test-cost / 3)) * 12 / time-unit ];; assuming tested every quarter, dividing the cost over the quarter
-      set care-service-cost care-service-cost + geno-cost
-     
-     set test-cost 0 
-      if not aware-previous-quarter? and aware?
+    [set care-service-cost (retention-care-cost + (cd4+rna-test-cost / 3)) * 12 / time-unit];; assuming tested every quarter, dividing the cost over the quarter
+    
+    set care-service-cost care-service-cost + geno-cost
+    
+    set test-cost 0 
+    
+    if not aware-previous-quarter? and aware?
     [set test-cost cost-testing]
-    set costs (util-cost + regimen-cost-quarter + oi-cost-quarter + care-service-cost + test-cost)
     
-    
+    set costs (util-cost + regimen-cost-quarter + oi-cost-quarter + care-service-cost + test-cost)  
     
    ; if index-patient?
    ; [
-      set total-utilization-cost total-utilization-cost + util-cost; / discount-rate-factor;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
-     set total-regimen-cost total-regimen-cost +  regimen-cost-quarter ;/ discount-rate-factor
-     set total-OI-cost total-OI-cost + oi-cost-quarter; / discount-rate-factor
-     
-     ]
-    
-   ; ] 
+    set total-utilization-cost total-utilization-cost + util-cost; / discount-rate-factor;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+    set total-regimen-cost total-regimen-cost + regimen-cost-quarter ;/ discount-rate-factor
+    set total-OI-cost total-OI-cost + oi-cost-quarter; / discount-rate-factor     
+  ]    
+  ; ] 
 end
 
 to-report normal-random-number [mean-value std]
   ;; Reports a positive  normal distributed random number
   report random-normal mean-value std;(mean-value + std * (sqrt (- 2 * ln (random-float 1)) * cos (2 * 180 * (random-float 1))) )
+
 end
+
 to-report trunc-normal-random-number [mean-value std min-val max-val]
   ;; Reports a positive  normal distributed random number
   ;let value (mean-value + std * (sqrt (- 2 * ln (random-float 1)) * cos (2 * (22 / 7) * (random-float 1))) )
   let value random-normal mean-value std;(mean-value + std * (sqrt (- 2 * ln (random-float 1)) * cos (2 * 180 * (random-float 1))) )
-  ifelse value >= min-val and  value <= max-val
+  ifelse value >= min-val and value <= max-val
   [report value]
   [report trunc-normal-random-number mean-value std min-val max-val]
+
 end   
 
-to      set-discounted-costs
+to set-discounted-costs
+  
   set undiscounted-Total-costs undiscounted-Total-costs  + costs
   set discounted-costs costs / discount-rate-factor
   
@@ -962,24 +1154,19 @@ end
 ;
 ;end
 ;
-
-
-
 to set-up-stage
-  ifelse age - age-at-infection <= 0.17  and stage < 2;' acute phase for 2 months= 0.17 years. checking stage if < 2 since age at infection of index persons not known
-    [set stage 1
-    ]
+  
+  ifelse age - age-at-infection <= 0.17 and stage < 2;' acute phase for 2 months= 0.17 years. checking stage if < 2 since age at infection of index persons not known
+  [set stage 1]
   ;' non acute
-    [Ifelse aware? = false;' not aware yet
-      [set stage 2] ;' sexual or IDU, unaware, non on haart, not acute
-      [ ;aware   
-        if on-treatment? = true
-        [ifelse regimen = 40 or regimen = 10
-          [set stage 5]
-          [set stage 6]
-        ]
-       
-        
+  [ifelse aware? = false;' not aware yet
+    [set stage 2] ;' sexual or IDU, unaware, non on haart, not acute
+    [ ;aware   
+      if on-treatment? = true
+      [ifelse regimen = 40 or regimen = 10
+        [set stage 5]
+        [set stage 6]
+      ]      
         ;        ifelse in-care? = false
         ;          [set stage 3]
         ;          [ Ifelse not on-treatment?
@@ -990,13 +1177,11 @@ to set-up-stage
         ;            
         ;            ] 
         ;          ]
-      ]
     ]
+  ]
   if stage = 1
-    [set  acute-stg-length  acute-stg-length + 1]
+  [set acute-stg-length  acute-stg-length + 1]
   ;   print age
   ; print age-at-infection
   ; print""
 end
-
-
