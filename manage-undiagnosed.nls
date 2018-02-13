@@ -1,64 +1,81 @@
 ;; controlling proportion in cascade of care: that is propotion in the six stages of the NHAS goal scenarios
 
-to manage-undiag
+to manage-undiag [i]
   
   ;; keeping unaware at 20%
-  let j 1
-  while [j <= 3] ;; 1= HET female; 2 = HET male; 3 = MSM
-  [
-    ;;val is number of people to diagnose
-    let val (count people with [dead = 0 and infected? = true and stage <= 2 and sex = j] - (count people with [dead = 0 and infected? = true and sex = j] * item (j - 1) current-unaware)) 
-    ; print val
-    if val > 0 
-    [if count  people with [dead = 0 and infected? = true and stage = 2 and sex = j] < val 
-      ;if count  people with [dead = 0 and infected? = true and stage = 2 and sex = j and index-patient? = true] < val 
-      [set val count people with [dead = 0 and infected? = true and stage = 2 and sex = j]; and index-patient? = true ]
+  let total-unaware total-people-sex with [stage <= 2]
+  let total-unaware-nonacute total-people-sex with [stage = 2]
+  
+  ;;val is number of people to diagnose
+  let val (count total-unaware - (count total-people-sex * item (i - 1) current-unaware)) 
+  ; print val
+  if val > 0 
+  [let total-num-unaware-nonacute count total-unaware-nonacute
+    if total-num-unaware-nonacute < val 
+    ;if count  people with [dead = 0 and infected? = true and stage = 2 and sex = j and index-patient? = true] < val 
+    [set val total-num-unaware-nonacute]
+    ask n-of (val) total-unaware-nonacute; and index-patient? = true ]
+    [; if new-infections = 0 
+      if new-infections = 0 and index-patient? = true ;; indexpatients are those already infected at time zero (2006 population)
+      [ifelse random-float 1 < prob-CD4-diagnosis-200 * item (i - 1) prop-CD4-diagnosis-500
+        [set CD4-count 50 + random 150]
+        [set CD4-count 200 + random 300]
       ]
-    ask n-of val people with [dead = 0 and infected? = true and stage = 2 and sex = j]; and index-patient? = true ]
-      [
-        ; if new-infections = 0 
-        if new-infections = 0 and index-patient? = true ;; indexpatients are those already infected at time zero (2006 population)
-        [ ifelse random-float 1 < 0.24 * item (j - 1) prop-CD4-diagnosis-500
-          [set CD4-count 50 + random 150]
-          [set CD4-count 200 + random 300]
-        ]
+      ;; the following are managed in set-testing-variables
 ;        set aware? true
 ;        set age-Diag age
 ;        set stage 3
 ;        set CD4-diagnosis CD4-count
-        set-testing-variables
-        set-ART-variables
-        set next-test ticks ;; setting time at testing to extract values
+      set-testing-variables
+      set-ART-variables
+        
+      set next-test ticks ;; setting time at testing to extract values
                             ; print 1
                             ;;assigning costs because update-simulation was done earlier to this
-        set test-cost cost-testing
-        set costs costs + cost-testing
-        set undiscounted-Total-costs undiscounted-Total-costs  + cost-testing
-        set discounted-costs cost-testing / discount-rate-factor
-        
-        set TOTAL-COSTS TOTAL-COSTS  + discounted-costs    
-      ]
+      set test-cost cost-testing
+      set costs costs + cost-testing
+      set undiscounted-Total-costs undiscounted-Total-costs  + cost-testing
+      ;set discounted-costs cost-testing / discount-rate-factor
+      set TOTAL-COSTS TOTAL-COSTS  + discounted-costs    
     ]
-    ;;;;;;;comment this for controlling CD4 at diagnois only and not keeping aware at current rate and constant  
-    
-    
-    
-    
-    set j j + 1
   ]
+  ;;;;;;;comment this for controlling CD4 at diagnois only and not keeping aware at current rate and constant  
   
 end
 
-
-
-to manage-no-care
+to manage-no-care [i]
   ;;If more people in stage >= 4 push them down to 3 (drop out of care), if more people in 3 push them up to 4 or 6
-  let j 1
-  while [j <= 3] ;; 1= HET female; 2 = HET male; 3 = MSM
-  [
-    let val ((item (j - 1) current-no-care * count people with [dead = 0 and infected? = true and sex = j] )- count people with [dead = 0 and infected? = true and stage = 3 and sex = j]) 
-    ifelse val > 0
-    [
+  
+  let total-nocare total-people-sex with [stage = 3]
+  
+  let val count total-nocare - (count total-people-sex * item (i - 1) current-no-care)  
+  if val > 0
+  [ask n-of (abs val) total-nocare 
+    [if not linked-to-care? ;; if not linked to care originally link to care
+      [set linked-to-care? true
+        set quarter-linked-care ticks
+        set in-care? true 
+        ;; in-care? is false either when 1) not linked to care originally or 2) linked and dropped out of care but may or maynot have entered back
+        ;;used to track how many drop out 
+      ]
+        
+;        ifelse retention-in-ART = 1 ;; if it is someone who was on treatment but dropped out of care get them back to treatment 
+;        [set CD4-to-start-ART CD4-count
+;          set-ART-variables
+;          set-total-regimen
+;          set-on-treatment?
+;          set-regimen 
+;          set-time-on-therapy
+;          
+;          set stage 6 
+;        ]
+;        [      
+      set stage 4
+       ; ]
+    ]
+  ]
+
+  ;else if[
       
 ;;      ifelse ticks >= (sim-dry-run + time-unit * dry-run)  
 ;;      [
@@ -84,35 +101,7 @@ to manage-no-care
 ;;          ]  
 ;;      ]
 ;      
-    ]
-    [ask n-of (abs val ) people with [dead = 0 and infected? = true and stage = 3 and sex = j] 
-      [
-        
-        if not linked-to-care? ;; if not linked to care originally link to care
-        [set linked-to-care? true
-          set quarter-linked-care ticks
-          set in-care? true 
-          ;; in-care? is false either when 1) not linked to care originally or 2) linked and dropped out of care but may or maynot have entered back
-          ;;used to track how many drop out 
-        ]
-        
-;        ifelse retention-in-ART = 1 ;; if it is someone who was on treatment but dropped out of care get them back to treatment 
-;        [set CD4-to-start-ART CD4-count
-;          set-ART-variables
-;          set-total-regimen
-;          set-on-treatment?
-;          set-regimen 
-;          set-time-on-therapy
-;          
-;          set stage 6 
-;        ]
-;        [
-          set stage 4
-       ; ]
-      ]
-    ]
-    set j j + 1
-  ]
+  
   
 ;  let val ((item (sex - 1) current-no-care * count people with [dead = 0 and infected? = true and sex <= 2] )- count people with [dead = 0 and infected? = true and stage = 3 and sex <= 2]) 
 ;  ifelse val > 0
@@ -185,47 +174,43 @@ to manage-no-care
   
 end
 
-to manage-care-noART ;;
-  let j 1
-  while [j <= 3] ;; 1= HET female; 2 = HET male; 3 = MSM
+to manage-care-noART [i]
+  
+  let total-care-noART total-people-sex with [stage = 4]
+  let total-VLS total-people-sex with [stage = 6] 
+  
+  let val (count total-care-noART) - (item (i - 1) current-care-noART * count total-people-sex)
+  if val > 0
   [
-    let val (count people with [dead = 0 and infected? = true and stage = 4 and sex = j]) - (item ( j - 1) current-care-noART * count people with [dead = 0 and infected? = true and sex  = j] )
-    if val > 0
-      [
-        ;      if val > count people with [dead = 0 and infected? = true and stage = 4 and sex  = j] 
-        ;      [set val count people with [dead = 0 and infected? = true and stage = 4 and sex  = j] ]
-        let val2 (count people with [stage = 6 and infected? = true and dead = 0 and sex = j]) - (item ( j - 1) current-ARTsuppressed * count people with [dead = 0 and infected? = true and sex = j]) 
-        ifelse val2 > 0
-        [
-          let counter 0
-          foreach sort-by [[CD4-count] of ?1 < [CD4-count] of ?2] people with [dead = 0 and infected? = true and stage = 4 and sex = j] 
-          ;; move people from stage 4 to stage 6
-          [if counter < floor(val)
-            [ask ?
-              [      
-                set CD4-to-start-ART CD4-count
-                set-ART-variables
-                set-total-regimen
-                set-on-treatment?
-                set-regimen 
-                set-time-on-therapy
-                set stage 6
-                ;print regimen
-              ]
-            
-            ]
-          set counter counter + 1
+    ;      if val > count people with [dead = 0 and infected? = true and stage = 4 and sex  = j] 
+    ;      [set val count people with [dead = 0 and infected? = true and stage = 4 and sex  = j] ]
+    let val2 (count total-VLS) - (item (i - 1) current-ARTsuppressed * count total-people-sex) 
+    ifelse val2 < 0
+    [let counter 0
+      foreach sort-by [[?1 ?2] -> [CD4-count] of ?1 < [CD4-count] of ?2] total-care-noART 
+      ;; move people from stage 4 to stage 6
+      [[?] -> if counter < floor(val)
+        [ask ?
+          [set CD4-to-start-ART CD4-count
+            set-ART-variables
+            set-total-regimen
+            set-on-treatment?
+            set-regimen 
+            set-time-on-therapy
+            set stage 6
+            ;print regimen
           ]
+          
         ]
-        [
-           ask n-of (val ) people with [dead = 0 and infected? = true and stage = 4 and sex = j] 
-           [set-dropout-care
-             set stage 3
-           ]
-        ]
-        
-        
+        set counter counter + 1
       ]
+    ]
+    [ask n-of (val) total-care-noART
+      [set-dropout-care
+        set stage 3
+      ]
+    ]  
+  ]
 ;      if ticks >= (sim-dry-run) and ticks <= (sim-dry-run + time-unit * 15)
 ;      [if val < 0 
 ;        [
@@ -246,10 +231,6 @@ to manage-care-noART ;;
 ;        ]
 ;      ]
         
-        
-    set j j + 1
-  ]
-  
 ;  let val (count people with [dead = 0 and infected? = true and stage = 4 and sex <= 2]) - (current-care-noART * count people with [dead = 0 and infected? = true and sex <= 2] )
 ;  if val > 0
 ;  [if val > count people with [dead = 0 and infected? = true and stage = 4 and sex <= 2] 
@@ -310,7 +291,7 @@ to  manage-ARTsuppressed
     let val (count people with [stage = 6 and infected? = true and dead = 0 and sex = j]) - (item ( j - 1) current-ARTsuppressed * count people with [dead = 0 and infected? = true and sex = j]) 
     ifelse val > 0
     [
-      ask n-of (floor val) people with [stage = 6  and dead = 0 and infected? = true and sex = j]
+      ask n-of (floor val) people with [stage = 6 and dead = 0 and infected? = true and sex = j]
       [
         ifelse ticks >= (sim-dry-run + time-unit * dry-run)
         [set stage 5]
@@ -318,7 +299,7 @@ to  manage-ARTsuppressed
       ]
     ]
     [
-      ask n-of (abs val) people with [stage = 5  and dead = 0 and infected? = true and sex = j]
+      ask n-of (abs val) people with [stage = 5 and dead = 0 and infected? = true and sex = j]
         [
           set stage 6
         ]
@@ -357,39 +338,45 @@ to  manage-ARTsuppressed
 ;      ]
 end
 
-to manage-ART-drop0ut
+to manage-ART-drop0ut [i]
   ;;If more people in stage >= 4 push them down to 3 (drop out of care), if more people in 3 push them up to 4 or 6
-  let j 1
-  while [j <= 3] ;; 1= HET female; 2 = HET male; 3 = MSM
-  [
-    let val (count people with [stage = 6 and infected? = true and dead = 0 and sex = j]) - (item ( j - 1) current-ARTsuppressed * count people with [dead = 0 and infected? = true and sex = j]) 
-    if val > 0
-    [
+  let total-VLS total-people-sex with [stage = 6]
   
-      ask n-of (val ) people with [dead = 0 and infected? = true and stage = 6 and sex = j] 
-        [set-dropout-care
-          set stage 3
-        ]
+  let val (count total-VLS) - (item (i - 1) current-ARTsuppressed * count total-people-sex) 
+  if val > 0
+  [ask n-of (val) total-VLS 
+    [set-dropout-care
+      set stage 3
     ]
-    set j j + 1
   ]
+
 end
-          
-to manage-ART-drop0ut-post2012
-  ;;If more people in stage >= 4 push them down to 3 (drop out of care), if more people in 3 push them up to 4 or 6
-  let j 1
-  while [j <= 3] ;; 1= HET female; 2 = HET male; 3 = MSM
-  [
-    let ARTCov 1 - item ( j - 1) current-unaware - item ( j - 1) current-no-Care - item ( j - 1) current-care-NoART
-    let val (count people with [stage >= 5 and infected? = true and dead = 0 and sex = j]) - (ARTCov * count people with [dead = 0 and infected? = true and sex = j]) 
-    if val > 0
-    [
+
+to manage-not-VLS-dropOut [i]
   
-      ask n-of (val ) people with [dead = 0 and infected? = true and stage >= 5 and sex = j] 
-        [set-dropout-care
-          set stage 3
-        ]
+  let total-not-VLS total-people-sex with [stage = 5]
+  
+  let val (count total-not-VLS) - (1 - item (i - 1) current-unaware - item (i - 1) current-no-Care - item(i - 1) current-care-NoART - item (i - 1) current-ARTsuppressed) * count total-people-sex 
+  if val > 0
+  [ask n-of (val) total-not-VLS 
+    [set-dropout-care
+      set stage 3
     ]
-    set j j + 1
   ]
+  
+end  
+  
+to manage-ART-drop0ut-post2012 [i]
+  ;;If more people in stage >= 4 push them down to 3 (drop out of care), if more people in 3 push them up to 4 or 6
+  let total-onART total-people-sex with [stage >= 5]
+  
+  let ARTCov 1 - item (i - 1) current-unaware - item (i - 1) current-no-Care - item (i - 1) current-care-NoART
+  let val (count total-onART) - (ARTCov * count total-people-sex) 
+  if val > 0
+  [ask n-of (val) total-onART 
+    [set-dropout-care
+      set stage 3
+    ]
+  ]
+
 end

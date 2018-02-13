@@ -1,55 +1,59 @@
 ;; If indivuals drop out of care this procedure will be called to determine when to reenter care and also keep track of other related variables
 
-  to set-dropout-care
-;     if regimen >= 1
-;      [set regimen1-dur 0]
-;      if regimen >= 2
-;      [set regimen2-dur 0]
-;      if regimen >= 3
-;      [set regimen3-dur 0]
-;      if regimen >= 4
-;      [set regimen4-dur 0]
+to set-dropout-care
 
+  if dropOut? = false
+  [set dropOut? true]
   
+  if total-regimen < regimen1-dur + regimen2-dur + regimen3-dur + 4 * rebound-duration
+  [set regimen1-dur 0] 
+  if total-regimen < regimen2-dur + regimen3-dur + regimen4-dur + 3 * rebound-duration
+  [set regimen2-dur 0]
+  if total-regimen < regimen3-dur + regimen4-dur + 2 * rebound-duration
+  [set regimen3-dur 0]
+  if total-regimen < regimen4-dur + rebound-duration
+  [set regimen4-dur 0]
     
-    if total-regimen < regimen2-dur + regimen3-dur + regimen4-dur + 4 * rebound-duration
-    [set regimen1-dur 0]
-    if total-regimen <  regimen3-dur + regimen4-dur + 3 * rebound-duration
-    [set regimen2-dur 0]
-    if total-regimen <    regimen4-dur + 2 * rebound-duration
-    [set regimen3-dur 0]
-    if total-regimen <   rebound-duration
-    [set regimen4-dur 0]
-   
-   ifelse on-treatment? = true
-   [set retention-in-ART 1]
-     [set retention-in-ART 0]
-    set prev-total-regimen 0
-      set total-regimen 0
-      set prev-prev-on-treatment? false
-      set prev-on-treatment? false
-      set on-treatment? false
-      set prev-regimen 0
-      set regimen 0
+  
+;  if total-regimen < regimen2-dur + regimen3-dur + regimen4-dur + 4 * rebound-duration
+;    [set regimen1-dur 0]
+;  if total-regimen < regimen3-dur + regimen4-dur + 3 * rebound-duration
+;    [set regimen2-dur 0]
+;  if total-regimen < regimen4-dur + 2 * rebound-duration
+;    [set regimen3-dur 0]
+;  if total-regimen < rebound-duration
+;    [set regimen4-dur 0]
+  
+  
+  
+  ifelse on-treatment? = true
+  [set retention-in-ART 1]
+  [set retention-in-ART 0]
+  set prev-total-regimen 0
+  set total-regimen 0
+  set prev-prev-on-treatment? false
+  set prev-on-treatment? false
+  set on-treatment? false
+  set prev-regimen 0
+  set regimen 0
       
-     ; set quarter-ART-start 0
-      set age-ART-start 0
-      set in-care? false
+  ; set quarter-ART-start 0
+  set age-ART-start 0
+  set in-care? false
       
    
-   ;; return back to care within 1 to 2 years (5 to 8 quarter) based on European study Gardner et. al., CID 2011
-   ;; Since CD4 decline when viral load is at set-point is 14.1 per quarter back calculate to determine CD4 in 1 to 2 years after stopping ART
-      ;;NOTE: RENTER TO CARE IS ALSO MANAGED BY EXPECTED PROPORTION in care: see manage-undiagnosed
-   ifelse random-float 1 < 0.45
-   [set CD4-to-start-ART CD4-count  - (14.1 * 4 / time-unit) * (1 * time-unit + random 1 * time-unit) ]
-   [ifelse random-float 1 < 0.85 ;; considering, of 55%, 20% reenter at CD4 36
-     [set CD4-to-start-ART 200]
-     [set CD4-to-start-ART 36]
-   ]
-    set CD4-at-care CD4-to-start-ART
+  ;; return back to care within 1 to 2 years (5 to 8 quarter) based on European study Gardner et. al., CID 2011
+  ;; Since CD4 decline when viral load is at set-point is 14.1 per quarter back calculate to determine CD4 in 1 to 2 years after stopping ART
+  ;;NOTE: RENTER TO CARE IS ALSO MANAGED BY EXPECTED PROPORTION in care: see manage-undiagnosed
+  ifelse random-float 1 < prob-reEnter
+  [set CD4-to-start-ART CD4-count  - (CD4-decline-quarter * 4 / time-unit) * (1 * time-unit + random 1 * time-unit) ]
+  [ifelse random-float 1 < prob-CD4-at-care-200 ;; considering, of 55%, 20% reenter at CD4 36
+    [set CD4-to-start-ART 200]
+    [set CD4-to-start-ART 36]
+  ]
+  set CD4-at-care CD4-to-start-ART
 
   ;  if CD4-ART > CD4-to-start-ART
   ;  [set CD4-ART CD4-to-start-ART];;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
                    ;of CD4 decline might not exactly coincide with the required start
-  end
-
+end

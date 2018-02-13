@@ -1,0 +1,579 @@
+to writeOutputValidation
+  
+  file-open "results-Validation.csv"
+
+  ;;;;output of PLWH
+  file-write count people with [infected? = true and dead = 0 and sex = 1]
+  file-write count people with [infected? = true and dead = 0 and sex = 2]
+  file-write count people with [infected? = true and dead = 0 and sex = 3]
+  file-write count people with [infected? = true and dead = 0 and sex = 4]
+  file-write count people with [infected? = true and dead = 0 and sex = 5]
+  file-write count people with [infected? = true and dead = 0 and sex = 6]
+  file-write count people with [infected? = true and dead = 0]
+  file-write ""
+  ;count people with [infected? = true and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ] / count people with [infected? = true and dead = 0]
+
+  ;;OUTPUT NUMBER INCIDENCES IN THIS YEAR
+  file-write count people with [infected? = true and sex = 1 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 4 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 5 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 6 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
+  file-write ""
+
+  ;;OUTPUT PROPORTION INCIDENCES  BY STAGE
+  let sum-val 0
+  let i 0
+  while [i < length count-trans-by-stage]
+    [
+      set sum-val sum-val + item i count-trans-by-stage
+      set i i + 1
+    ]
+  ; print sum-val
+  file-write item 0 count-trans-by-stage / sum-val
+  file-write item 1 count-trans-by-stage / sum-val
+  file-write item 2 count-trans-by-stage / sum-val
+  file-write item 3 count-trans-by-stage / sum-val
+  file-write item 4 count-trans-by-stage / sum-val
+  file-write item 5 count-trans-by-stage / sum-val
+  file-write ""
+
+  ;;OUTPUT PROPORTION INCIDENCES  BY PARTNER TYPE
+  ; set sum-val 0
+  ; set i 0
+  ; while [i < length count-trans-by-partner-type]
+  ;   [
+  ;     set sum-val sum-val + item i count-trans-by-partner-type
+  ;     set i i + 1
+  ;   ]
+  ; print sum-val
+  ; print""
+  set i 0
+  while [i < length (count-trans-by-partner-type)]
+  [file-write item i count-trans-by-partner-type
+    set i i + 1
+  ]
+
+  file-write ""
+
+  ;;OUPUT CD4-COUNT AT DIAGNOSIS;; note: next-test is the time unit at which person was diagnosed
+  set sum-val count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write ""
+
+  set sum-val count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write ""
+
+  ;;PROPORTION IN STAGE
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 1] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 2] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 3] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 4] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 5] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 6] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write ""
+  file-write  count people with [infected? = true and sex >= 3 and dead = 0 and stage = 1] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 2] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 3] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 4] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 5] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 6] / count people with [infected? = true and sex >= 3 and dead = 0]
+   file-write ""
+
+  ;;Number newly diagnosed
+  file-write  item 0 countNewDiagnosis
+  file-write  item 1 countNewDiagnosis
+  file-write  item 2 countNewDiagnosis
+  file-write  item 3 countNewDiagnosis
+  file-write  item 4 countNewDiagnosis
+  file-write  item 5 countNewDiagnosis
+  file-write ""
+  ;
+  ;Deaths
+  file-write count people with [infected? = true  and dead = 1 and stage > 2 and sex = 1]; cumulative deaths among those aware
+  file-write count people with [infected? = true  and dead = 1 and stage > 2 and sex = 2]; cumulative deaths among those aware
+  file-write count people with [infected? = true  and dead = 1 and stage > 2 and sex = 3]; cumulative deaths among those aware
+  file-write count people with [infected? = true  and dead = 1 and stage > 2]; cumulative deaths among all PLWH
+  file-write ""
+
+  ;;mean years to diagnosis among new diagnosis
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false  and stage > 2 and abs (age - age-Diag) <= 1]
+  file-write ""
+
+  ;;Mean age  to ART by CD4 count (for estimating time to CD4 decline)age-ART-start includes age at reentry if drop out of care(better to use age-diag
+  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false  and age-ART-start > 0 and CD4-ART >  0 and CD4-ART < 200]
+  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  200 and CD4-ART < 250]
+  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  250 and CD4-ART < 300]
+  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  300 and CD4-ART < 350]
+  file-write median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  350 and CD4-ART < 500]
+  file-write "";median [age-ART-start - age-at-infection] of people with [infected? = true and index-patient? = false and age-ART-start > 0 and CD4-ART >=  500]
+  file-write ""
+
+  ;;Median age  to diagnosis by CD4 count (for estimating time to CD4 decline)
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >  0 and  CD4-diagnosis < 200]
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  200 and  CD4-diagnosis < 250]
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  250 and  CD4-diagnosis < 300]
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  300 and  CD4-diagnosis < 350]
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  350 and  CD4-diagnosis < 500]
+  file-write median [age-Diag - age-at-infection] of people with [infected? = true and index-patient? = false and age-Diag > 0 and  CD4-diagnosis >=  500]
+
+  ;;Survival for >12 >24 and >36 months from diagnosis
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 ] ;total diagnosed >36 month back
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 and dead = 1 and (life-with-infection - (age-Diag - age-at-infection)) <= 2 and (life-with-infection - (age-Diag - age-at-infection)) > 1]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 and dead = 1 and (life-with-infection - (age-Diag - age-at-infection)) <= 3 and (life-with-infection - (age-Diag - age-at-infection)) > 2]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and (ticks - age-Diag * time-unit) > 36 and dead = 1 and (life-with-infection - (age-Diag - age-at-infection)) > 3] + count people with [infected? = true and index-patient? = false and aware? = true and ticks - age-Diag * time-unit > 36 and dead = 0]
+file-write""
+
+  ;;New diagnosis by age
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 20]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 25 and age >= 20]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 30 and age >= 25]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 35 and age >= 30]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 40 and age >= 35]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 45 and age >= 40]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 50 and age >= 45]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 55 and age >= 50]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 60 and age >= 55]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age < 65 and age >= 60]
+  file-write count people with [infected? = true and index-patient? = false and aware? = true and age - age-Diag < 1 and age >= 65]
+  file-write""
+
+;  ;;mean life expectancy
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 25]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 35 and age >= 25]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 40 and age >= 35]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 45 and age >= 40]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 50 and age >= 45]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 55 and age >= 50]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 60 and age >= 55]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age < 65 and age >= 60]
+;  file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false and aware? = true and age >= 65]
+;  file-write""
+;
+;
+
+  file-print""
+
+    file-close
+  ;;Time to AIDS
+
+  if ticks = (sim-dry-run + time-unit * num-year-trans) [
+
+    file-open "timeToAIDS.csv"
+    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >  0 and CD4-ART < 200]
+    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  200 and CD4-ART < 250]
+    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  250 and CD4-ART < 300]
+    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  300 and CD4-ART < 350]
+    file-write count people with [infected? = true and index-patient? = false  and dead = 1 and CD4-ART >=  350 ]
+    file-print""
+
+    ask people with [infected? = true and index-patient? = false  and AIDS? = true and dead = 1 and CD4-ART >  0] [
+      file-write time-onset-AIDS
+      file-write CD4-ART
+      file-print""
+    ]
+    file-close
+  ]
+  
+end
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;WRITING RESULTS TO EXCEL FILE
+to write-output
+  ;;writing out all the results into excel file
+
+  ;;NHAS goals see TRIP-May 9th 2012 talk
+  if goal = 1 [file-open "results-concurrency-one.csv"]
+  if goal = 2 [file-open "results-concurrency-two.csv"]
+  if goal = 3 [file-open "results-concurrency-three.csv"]
+  if goal = 4 [file-open "results-concurrency-four.csv"]
+  if goal = 5 [file-open "results-concurrency-five.csv"]
+
+  ;;;;output of PLWH
+  file-write count people with [infected? = true and dead = 0 and sex = 1]
+  file-write count people with [infected? = true and dead = 0 and sex = 2]
+  file-write count people with [infected? = true and dead = 0 and sex = 3]
+  file-write count people with [infected? = true and dead = 0 and sex = 4]
+  file-write count people with [infected? = true and dead = 0 and sex = 5]
+  file-write count people with [infected? = true and dead = 0 and sex = 6]
+  file-write count people with [infected? = true and dead = 0 ]
+  file-write ""
+  ;count people with [infected? = true and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ] / count people with [infected? = true and dead = 0]
+
+  ;;OUTPUT NUMBER INCIDENCES IN THIS YEAR
+  file-write count people with [infected? = true and sex = 1 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 3 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 4 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 5 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and sex = 6 and trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  file-write  count people with [infected? = true and trans-year = ceiling ((ticks - sim-dry-run) / time-unit)]
+  file-write ""
+
+  ;;OUTPUT PROPORTION INCIDENCES  BY STAGE
+  let sum-val 0
+  let i 0
+  while [i < length count-trans-by-stage]
+    [
+      set sum-val sum-val + item i count-trans-by-stage
+      set i i + 1
+    ]
+  ; print sum-val
+  file-write item 0 count-trans-by-stage / sum-val
+  file-write item 1 count-trans-by-stage / sum-val
+  file-write item 2 count-trans-by-stage / sum-val
+  file-write item 3 count-trans-by-stage / sum-val
+  file-write item 4 count-trans-by-stage / sum-val
+  file-write item 5 count-trans-by-stage / sum-val
+  file-write ""
+
+  ;;OUTPUT PROPORTION INCIDENCES  BY PARTNER TYPE
+  ; set sum-val 0
+  ; set i 0
+  ; while [i < length count-trans-by-partner-type]
+  ;   [
+  ;     set sum-val sum-val + item i count-trans-by-partner-type
+  ;     set i i + 1
+  ;   ]
+  ; print sum-val
+  ; print""
+  set i 0
+  while [i < length (count-trans-by-partner-type)]
+  [file-write item i count-trans-by-partner-type
+    set i i + 1
+  ]
+
+  file-write ""
+
+  ;;OUPUT CD4-COUNT AT DIAGNOSIS;; note: next-test is the time unit at which person was diagnosed
+  set sum-val count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex <= 2 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write ""
+
+  set sum-val count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis <= 200 and CD4-diagnosis >= 4 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 200 and CD4-diagnosis <= 350 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 350 and CD4-diagnosis <= 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write count people with [infected? = true and sex = 3 and stage >= 3 and CD4-diagnosis > 500 and abs (ticks - next-test) <= 1 * time-unit]
+  file-write ""
+
+  ;;PROPORTION IN STAGE
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 1] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 2] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 3] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 4] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 5] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write count people with [infected? = true and sex <= 2 and dead = 0 and stage = 6] / count people with [infected? = true and sex <= 2 and dead = 0]
+  file-write ""
+  file-write  count people with [infected? = true and sex >= 3 and dead = 0 and stage = 1] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 2] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 3] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 4] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 5] / count people with [infected? = true and sex >= 3 and dead = 0]
+  file-write count people with [infected? = true and sex >= 3 and dead = 0 and stage = 6] / count people with [infected? = true and sex >= 3 and dead = 0]
+
+  ;;Number of main, concurrent and casual partners
+  file-write ""
+  set sum-val count people with [infected? = true and dead = 0 and sex <= 2]
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 0 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 1 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 2 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 3 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner >= 4 and sex <= 2] / sum-val
+  file-write ""
+  ; set sum-val count people with [infected? = true and dead = 0]
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 0 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 1 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 2 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 3 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner >= 4 and sex <= 2] / sum-val
+  file-write ""
+  ; set sum-val count people with [infected? = true and dead = 0]
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 0 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 1 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 2 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 3 and sex <= 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner >= 4 and sex <= 2] / sum-val
+
+
+  file-write ""
+  set sum-val count people with [infected? = true and dead = 0 and sex = 3]
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 0 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 1 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 2 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner = 3 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 0 counter-partner >= 4 and sex = 3] / sum-val
+  file-write ""
+  ; set sum-val count people with [infected? = true and dead = 0]
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 0 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 1 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 2 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner = 3 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 1 counter-partner >= 4 and sex = 3] / sum-val
+  file-write ""
+  ; set sum-val count people with [infected? = true and dead = 0]
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 0 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 1 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 2 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner = 3 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner >= 4 and sex = 3] / sum-val
+
+  ;;Number of main + concurrent + casual partners of all HET
+  file-write ""
+  set sum-val count people with [infected? = true and dead = 0 and sex = 2]
+  file-write sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0 and sex = 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 and sex = 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 2 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 4 and sex = 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 5 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 9 and sex = 2] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 10 and sex = 2] / sum-val
+
+  file-write ""
+  ;;Number of main + concurrent + casual partners of all MSM
+  set sum-val count people with [infected? = true and dead = 0 and sex = 3 ]
+  file-write sum-val
+  file-write count people with [infected? = true and dead = 0  and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 2 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 4 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 5 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 9 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and ( item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 10 and sex = 3] / sum-val
+
+  file-write ""
+  ;;Number of main + concurrent + casual partners of MSM with atleast one casual partner
+  set sum-val count people with [infected? = true and dead = 0 and sex = 3 and item 2 counter-partner > 0]
+  file-write sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 0 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) = 1 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 2 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 4 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 5 and (item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) <= 9 and sex = 3] / sum-val
+  file-write count people with [infected? = true and dead = 0 and item 2 counter-partner > 0 and ( item 0 counter-partner + item 1 counter-partner + item 2 counter-partner) >= 10 and sex = 3] / sum-val
+
+
+  file-write ""
+
+  ;;OUTPUT PROP INCIDENCES IN THIS YEAR BY AGE
+  set sum-val count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+
+  file-write count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age < 30] / sum-val
+  file-write  count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 30 and age < 40] / sum-val
+  file-write count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 40 and age < 50] / sum-val
+  file-write  count people with [infected? = true and sex <= 2 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 50] / sum-val
+  file-write ""
+  set sum-val count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+
+  file-write count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age < 30] / sum-val
+  file-write  count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 30 and age < 40] / sum-val
+  file-write count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 40 and age < 50] / sum-val
+  file-write  count people with [infected? = true and sex = 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 50] / sum-val
+  file-write ""
+
+  set sum-val count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit) ]
+  if sum-val = 0 [set sum-val 1]
+  file-write count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age < 30] / sum-val
+  file-write  count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 30 and age < 40] / sum-val
+  file-write count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 40 and age < 50] / sum-val
+  file-write  count people with [infected? = true and sex > 3 and  trans-year = ceiling ((ticks - sim-dry-run) / time-unit)  and age >= 50] / sum-val
+  file-write ""
+
+  ;;average and median CD4 at diagnosis
+  file-write mean [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex <= 2]
+  file-write median [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex <= 2]
+  file-write count people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex <= 2]
+  file-write ""
+
+  file-write mean [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex = 3]
+  file-write median [CD4-diagnosis] of people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex = 3]
+  file-write count people with [infected? = true and stage >= 3 and abs (ticks - next-test) <= 1 * time-unit and sex = 3]
+  file-write ""
+
+  ;;average and median CD4 at initial ART
+  file-write mean [CD4-ART] of people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex <= 2]
+  file-write median [CD4-ART] of people with [infected? = true  and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex <= 2]
+  file-write count people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex <= 2]
+  file-write ""
+
+  file-write mean [CD4-ART] of people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex = 3]
+  file-write median [CD4-ART] of people with [infected? = true  and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex = 3]
+  file-write count people with [infected? = true and CD4-ART >  0 and ticks - quarter-ART-start <= 1 * time-unit and sex = 3]
+  file-write ""
+
+  ;;cost this time-unit. Multipliying by time-unit to convert to annual cost assuming approximately same each year
+  file-write sum[costs] of people with [infected? = true] * time-unit
+  file-write sum[util-cost] of people with [infected? = true] * time-unit
+  file-write sum[regimen-cost-quarter] of people with [infected? = true] * time-unit
+  file-write sum[oi-cost-quarter] of people with [infected? = true] * time-unit
+  file-write sum[ care-service-cost] of people with [infected? = true] * time-unit
+  file-write sum[ test-cost] of people with [infected? = true] * time-unit
+  file-write ""
+
+  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true]
+  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true and (quarter-linked-care - next-test) <= 3 * time-unit / 12] ;; within 3 months of diagnosis
+  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true  and (quarter-linked-care - next-test) <= 6 * time-unit / 12] ;; within 3 months of diagnosis
+  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true  and (quarter-linked-care - next-test) <= 12 * time-unit / 12] ;; within 3 months of diagnosis
+  file-write count people with [infected? = true and next-test > 0 and linked-to-care? = true  and (quarter-linked-care - next-test) <= 24 * time-unit / 12] ;; within 3 months of diagnosis
+  file-write ""
+  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true  and dead = 0]
+  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true and stage = 3 and dead = 0];; proportion every year who dropped out of care
+  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true  and dead = 1]
+  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true and in-care? = false and dead = 1];; individuals who dropped out of care -may or may not have entered back
+
+
+  file-write ""
+  file-write count people with [infected? = true and  index-patient? = false and linked-to-care? = true  and quarter-ART-start > 0 and dead = 1]
+  file-write count people with [infected? = true and index-patient? = false and linked-to-care? = true  and quarter-ART-start > 0 and retention-in-ART = 1 and dead = 1]
+
+
+  file-write ""
+  ;;for those people who are dead write life-variables.
+  if count people with [infected? = true and dead = 1 and index-patient? = false and AIDS? = true] > 1
+  [file-write count people with [infected? = true and dead = 1 and index-patient? = false ] ;; count people for who we are extracting life varibles
+    file-write count people with [infected? = true and dead = 1 and index-patient? = false  and AIDS? = true]
+    file-write ""
+    file-write mean [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [life-time-transmissions] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [time-onset-AIDS ] of people with [infected? = true and dead = 1 and index-patient? = false  and AIDS? = true]
+    file-write mean [life-lost-to-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [TOTAL-COSTS] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
+
+    file-write mean [total-utilization-cost] of people with [infected? = true and dead = 1 and index-patient? = false ] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+    file-write mean [total-regimen-cost] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write mean [total-OI-cost] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write ""
+    file-write mean [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and index-patient? = false ]
+
+
+    file-write ""
+    file-write ""
+    file-write ""
+    file-write standard-deviation [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [life-time-transmissions] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [time-onset-AIDS ] of people with [infected? = true and dead = 1 and index-patient? = false  and AIDS? = true]
+    file-write standard-deviation [life-lost-to-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [life-with-infection ] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [TOTAL-COSTS] of people with [infected? = true and dead = 1 and index-patient? = false ]
+    file-write standard-deviation [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and index-patient? = false]
+
+    file-write standard-deviation [total-utilization-cost] of people with [infected? = true and dead = 1 and index-patient? = false] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+    file-write standard-deviation [total-regimen-cost] of people with [infected? = true and dead = 1 and index-patient? = false]
+    file-write standard-deviation [total-OI-cost] of people with [infected? = true and dead = 1 and index-patient? = false]
+    file-write ""
+    file-write standard-deviation [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and index-patient? = false]
+  ]
+
+  file-write ""
+  file-write ""
+
+  file-write numActsCasualMSM
+  file-write numActsMainMSM
+  file-write numActsConMSM
+  file-write numActsMainHET
+  file-write numActsConHET
+
+  set i  0
+  while [i <= 5]
+    [  file-write item i numACTStable3 ;
+      set i i + 1
+    ]
+  set i  0
+  while [i <= 5]
+    [  file-write item i numTranstable3 ;
+      set i i + 1
+    ]
+
+  file-print ""
+  file-close
+
+end
+
+to write-life-variables
+
+  if goal = 1 [file-open "results-concurrency-one.csv"]
+  if goal = 2 [file-open "results-concurrency-two.csv"]
+  if goal = 3 [file-open "results-concurrency-three.csv"]
+  if goal = 4 [file-open "results-concurrency-four.csv"]
+  if goal = 5 [file-open "results-concurrency-five.csv"]
+
+  file-print""
+  file-close
+
+
+  if goal = 1 [file-open "results-life-variables-one.csv"]
+  if goal = 2 [file-open "results-life-variables-two.csv"]
+  if goal = 3 [file-open "results-life-variables-three.csv"]
+  if goal = 4 [file-open "results-life-variables-four.csv"]
+  if goal = 5 [file-open "results-life-variables-five.csv"]
+
+  let i 1
+  repeat 3
+    [
+
+      file-write count people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i] ;; count people for who we are extracting life varibles
+      file-write count people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i and AIDS? = true]
+      file-write ""
+      file-write mean [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [life-time-transmissions] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [time-onset-AIDS ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i and AIDS? = true]
+      file-write mean [life-lost-to-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [life-with-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [TOTAL-COSTS] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+
+      file-write mean [total-utilization-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+      file-write mean [total-regimen-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write mean [total-OI-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write ""
+      file-write mean [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+
+      file-print ""
+      file-write ""
+      file-write ""
+      file-write ""
+      file-write standard-deviation [life-with-infection - (time-on-ART / time-unit)] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [life-time-transmissions] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [time-onset-AIDS ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i and AIDS? = true]
+      file-write standard-deviation [life-lost-to-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [(non-AIDS-death - sum-QALYs) / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [disc-life-lost-to-infection / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [life-with-infection ] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [TOTAL-COSTS] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [disc-QALYs-lost / time-unit] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+
+      file-write standard-deviation [total-utilization-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i] ;; inpatient + outpatient (incurred from start of care for HIV) + ED costs (incurred from start of HIV)
+      file-write standard-deviation [total-regimen-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write standard-deviation [total-OI-cost] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+      file-write ""
+      file-write standard-deviation [undiscounted-Total-costs] of people with [infected? = true and dead = 1 and infected-2013-2022? = true and sex  = i]
+
+      file-print ""
+      file-print ""
+      set i i + 1
+    ]
+
+  file-write ""
+
+  file-print ""
+  file-print ""
+  file-close
+  
+end

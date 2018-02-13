@@ -41,7 +41,7 @@ people-own [
                 ; e.g.: partner-array [ 1 0 ] implies person has only one partner; 
                 ;e.g.: partner-array [ 1 1] implies person has concurrent partners
   partner-length
-  partner-counter
+  partner-counter 
   partner-infected?
   ;casual-partners-concurrent
   
@@ -64,18 +64,22 @@ people-own [
   
   
   index?
-  sexual?
+  initial?
   ; concurrency
   in-concurrency
   mix?
   bi-sexual?
+  sexual-Transmission?
   
+  ; IDU partners related
   
-  
+  IDU-ptnr-positive
+  IDU-ptnr-shared
+  num-IDU-ptnr
+  needle-sharing?
   
   non-AIDS-death
   quarter-nonAIDS-death
-  
   
   CD4-at-care
   CD4-to-start-ART ;; set CD4 count at which ART should start
@@ -87,20 +91,23 @@ people-own [
   regimen2-dur
   regimen3-dur
   regimen4-dur 
-  sexual-Transmission?
   
   infected-previous-quarter?
   infected?
   aware-previous-quarter?
   aware?
   total-regimen
+  dropOut?
   prev-total-regimen
+  prev-onART?
+  prev-VLS?
   on-treatment?
   prev-on-treatment?
   prev-prev-on-treatment?
   regimen
   prev-regimen
   time-on-therapy 
+  total-rebound
   
   viral-load
   viral-load-stratum
@@ -163,8 +170,7 @@ people-own [
   no-life-lost-from-infection?
   
   ; sum-disc-life-with-HIV 
-  ; sum-disc-life-no-HIV 
-  
+  ; sum-disc-life-no-HIV   
   
   disc-life-lost-to-infection 
   disc-QALYs-lost
@@ -186,30 +192,28 @@ people-own [
   care-service-cost 
   regimen-cost-quarter
   oi-cost-quarter
+  
+  count-casuals
 ]
 
 
-
-
-
-to set-infected-variables  
+to set-infected-variables
+  
   set infected-2013-2022?  false
   
-  set  acute-stg-length  0
+  set acute-stg-length  0
   ; set color red 
   
   set trans-year ceiling((ticks - sim-dry-run) / time-unit)
   
-  
-  
   ; set-next-test ;; WAS using this if people tested based on frequency of test instead of saying diagnosed people such that 20% are unaware
   
-  ifelse random-float 100 <= percent-IDU-transmission
-    [set sexual-Transmission? false]
-    [set sexual-Transmission? true]
+  ;ifelse random-float 100 <= percent-IDU-transmission
+  ;  [set sexual-Transmission? false]
+  ;  [set sexual-Transmission? true]
   ;print sexual-Transmission? 
   
-  if sex >= 4 [ set sexual-Transmission? false]
+  ;if sex >= 4 [set sexual-Transmission? false]
   
   
   ;;SET INTIAL VALUES OF SIMULATION VARIABLES: values on first quarter of infection
@@ -229,22 +233,23 @@ to set-infected-variables
   set aware? false
   set prev-total-regimen 0
   set total-regimen 0
+  set prev-onART? false
+  set prev-VLS? false
+  set dropOut? false
   set prev-prev-on-treatment? false
   set prev-on-treatment? false
   set on-treatment? false
   set prev-regimen 0
   set regimen 0
   set time-on-therapy 1
-  set viral-load trunc-normal-random-number 5.3 0.459 4.4 6.2; 5.3
+  set viral-load trunc-normal-random-number (item 0 viral-load-by-stage-mean) (item 0 viral-load-by-stage-std) (item 0 viral-load-by-stage-lb) (item 0 viral-load-by-stage-ub); 5.3
   set-viral-load-stratum
   
   ;       let get-val normal-random-number 825 38.27 
   ;      while [get-val > 900 or get-val < 750]
   ;      [set get-val normal-random-number 900 38.27 ]
   
-  let get-val 550 + random (750 - 550) ;; calibrated to match time time to CD4 ddecline in Lodi et al, CID, 2011
-  
-  set prev-CD4-count get-val 
+  set prev-CD4-count item 0 CD4-lower-new-infection + random (item 0 CD4-upper-new-infection - item 0 CD4-lower-new-infection) ;; calibrated to match time time to CD4 ddecline in Lodi et al, CID, 2011
   ;set prev-CD4-count 900
   set CD4-count prev-CD4-count
   
@@ -296,28 +301,29 @@ to set-infected-variables
   set util-cost 0 
   set test-cost 0
   set care-service-cost 0
-  set  regimen-cost-quarter 0
+  set regimen-cost-quarter 0
   set oi-cost-quarter 0
   
   ; set yearly-cost [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]  
   
   set discount-life-if-no-HIV 0
   set-discount-life-if-no-HIV 
+  
 end
 
-
-
-
 to set-discount-life-if-no-HIV
+  
   let i ticks
   repeat non-AIDS-death * 12 / time-unit
-  [ set i i + 1
+  [set i i + 1
     let discount-rate-factor-global (1 + discount-rate) ^ floor((i - t-start - 1) / time-unit)
     set discount-life-if-no-HIV (discount-life-if-no-HIV + (1 / discount-rate-factor-global))
   ]
+  
 end
 
 to set-testing-variables
+  
   set aware? true
   set age-Diag age
   set stage 3
@@ -328,96 +334,150 @@ to set-testing-variables
   ;13-24  25-34  35-44  45-54  >55
 
   let care-index 0
-  if age < 25 [ set care-index 0];
-  if age >= 25 and age < 35 [set care-index 1];
-  if age >= 35 and age < 44 [set care-index 2];
-  if age >= 45 and age < 54 [set care-index 3];
-  if age >= 55 [set care-index 4]
+  let ageInd 0
+  while [ageInd < num-age]
+  [
+    if age < item ageInd age-UB and age >= item ageInd age-LB
+    [set care-index ageInd]
+    set ageInd ageInd + 1
+  ]
   
   let randvalue random-float 1
   ifelse randvalue <= item (sex - 1) care-at-diag ;; % linking to care within 3 months of diagnosis
   ; ifelse randvalue <= item (care-index) care-at-diag-byage ;; % linking to care within 3 months of diagnosis
-    [set CD4-at-care CD4-diagnosis + random 18];; adjusting for CD4 decline in 3 months
-    [ifelse randvalue <= 0.9
-      [set CD4-at-care 200]
-      [set CD4-at-care 36]
-    ]
+  [set CD4-at-care CD4-diagnosis - random CD4-decline-quarter];; adjusting for CD4 decline in 3 months
+  [
+    ifelse randvalue <= prob-CD4-at-care-200
+    [set CD4-at-care 200]
+    [set CD4-at-care 36]
+  ]
   ;print CD4-at-care
   if CD4-diagnosis < CD4-at-care
-    [set CD4-at-care CD4-diagnosis]
+  [set CD4-at-care CD4-diagnosis]
   set CD4-to-start-ART CD4-at-care
+  
   if CD4-to-start-ART > CD4-start-ART-guideline
-    [set CD4-to-start-ART CD4-start-ART-guideline ]
+  [set CD4-to-start-ART CD4-start-ART-guideline]
   ;      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 end
 
 to set-ART-variables     
   ;;determine initial suppression and duration on the regimens;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+  
   ifelse CD4-to-start-ART <= 50
-    [ set initial-suppression-prob (item 0 probability-initial-suppression)]
-    [ifelse  CD4-to-start-ART <= 200
-      [ set initial-suppression-prob (item 1 probability-initial-suppression)]
-      [ set initial-suppression-prob (item 2 probability-initial-suppression)]
-    ]
+  [set initial-suppression-prob (item 0 probability-initial-suppression)]
+  [
+    ifelse CD4-to-start-ART <= 200
+    [set initial-suppression-prob (item 1 probability-initial-suppression)]
+    [set initial-suppression-prob (item 2 probability-initial-suppression)]
+  ]
   
-  
-  set rate-viral-rebound []
-  
-  if CD4-to-start-ART  < 100 
-    [ set rate-viral-rebound lput (0.05 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
-    ]
-  
-  if CD4-to-start-ART  >= 100 and CD4-to-start-ART  < 200
-    [ set rate-viral-rebound lput (0.025 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
-    ]
-  
-  if CD4-to-start-ART  >= 200 and CD4-to-start-ART  < 300
+  let i 0
+  let j 0
+  while [i < length viral-rebound-rate]
+  [
+    if CD4-to-start-ART < item i viral-rebound-CD4-upper and CD4-to-start-ART >= item i viral-rebound-CD4-lower
     [
-      set rate-viral-rebound lput (0.018 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+      set rate-viral-rebound n-values num-regimen [item i viral-rebound-rate]
+      set j 0
+      while [j < num-regimen]
+      [
+        set rate-viral-rebound replace-item j rate-viral-rebound (item i viral-rebound-rate * viral-rebound-increase ^ j)
+        set j j + 1
+      ]
+      set i length viral-rebound-rate 
     ]
-  
-  if CD4-to-start-ART  >= 300 and CD4-to-start-ART  < 400
-    [
-      set rate-viral-rebound lput (0.015 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
-    ]
-  if CD4-to-start-ART  >= 400 
-    [
-      set rate-viral-rebound lput (0.014 ) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
-    ]
-  ;      
-  set rate-viral-rebound lput ((item 0 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
-  set rate-viral-rebound lput ((item 1 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
-  set rate-viral-rebound lput ((item 2 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
+    set i i + 1
+  ]
   
   
-  set regimen1-dur 0
-  set regimen2-dur 0
-  set regimen3-dur 0
-  set regimen4-dur 0
+;  set rate-viral-rebound []
+;  
+;  if CD4-to-start-ART < 100 
+;    [set rate-viral-rebound lput (0.05) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+;    ]
+;  
+;  if CD4-to-start-ART >= 100 and CD4-to-start-ART  < 200
+;    [set rate-viral-rebound lput (0.025) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+;    ]
+;  
+;  if CD4-to-start-ART >= 200 and CD4-to-start-ART  < 300
+;    [set rate-viral-rebound lput (0.018) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+;    ]
+;  
+;  if CD4-to-start-ART >= 300 and CD4-to-start-ART  < 400
+;    [set rate-viral-rebound lput (0.015) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+;    ]
+;  if CD4-to-start-ART >= 400 
+;    [set rate-viral-rebound lput (0.014) rate-viral-rebound ; 0.074 /1.14 / 1.14 for >=200, 0.074 /1.14 for 100-199
+;    ]
+;  ;      
+;  set rate-viral-rebound lput ((item 0 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
+;  set rate-viral-rebound lput ((item 1 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
+;  set rate-viral-rebound lput ((item 2 rate-viral-rebound) * 1.14) rate-viral-rebound ;mean 1.18; range 1.12 to 1.24
   
-  if random-float 1 <= initial-suppression-prob
-  ;[set regimen1-dur floor (random-exponential ((4 / (item 0 rate-viral-rebound))))]
+  set total-rebound num-regimen
+  ifelse dropOut? = false
+  [
+    set regimen1-dur 0
+    set regimen2-dur 0
+    set regimen3-dur 0
+    set regimen4-dur 0
+    
+    if random-float 1 <= initial-suppression-prob
+    ;[set regimen1-dur floor (random-exponential ((4 / (item 0 rate-viral-rebound))))]
     [set regimen1-dur 1 + floor (ln (random-float 1) / (- item 0 rate-viral-rebound / time-unit))]
-  
-  if random-float 1 <= initial-suppression-prob
-  ;[set regimen2-dur floor (random-exponential ((4 / (item 1 rate-viral-rebound))))]
+    
+    if random-float 1 <= initial-suppression-prob
+    ;[set regimen2-dur floor (random-exponential ((4 / (item 1 rate-viral-rebound))))]
     [set regimen2-dur 1 + floor (ln (random-float 1) / (- item 1 rate-viral-rebound / time-unit))]
-  
-  if random-float 1 <= initial-suppression-prob
-  ;[set regimen3-dur floor (random-exponential ((4 / (item 2 rate-viral-rebound))))]
+    
+    if random-float 1 <= initial-suppression-prob
+    ;[set regimen3-dur floor (random-exponential ((4 / (item 2 rate-viral-rebound))))]
     [set regimen3-dur 1 + floor (ln (random-float 1) / (- item 2 rate-viral-rebound / time-unit))]
-  
-  if random-float 1 <= initial-suppression-prob and num-regimen = 4
-  ;[set regimen3-dur floor (random-exponential ((4 / (item 2 rate-viral-rebound))))]
+    
+    if random-float 1 <= initial-suppression-prob and num-regimen = 4
+    ;[set regimen3-dur floor (random-exponential ((4 / (item 2 rate-viral-rebound))))]
     [set regimen4-dur 1 + floor (ln (random-float 1) / (- item 3 rate-viral-rebound / time-unit))]
+    
+  ]
   
-  ; print regimen1-dur
-  ; print regimen2-dur
-  ; print regimen3-dur
+  [
+    ifelse regimen1-dur > 0 
+    [
+      ifelse random-float 1 <= initial-suppression-prob
+      [set regimen1-dur 1 + floor (ln (random-float 1) / (- item 0 rate-viral-rebound / time-unit))]
+      [set regimen1-dur 0]
+    ]    
+    [set total-rebound total-rebound - 1]
+    
+    ifelse regimen2-dur > 0
+    [
+      ifelse random-float 1 <= initial-suppression-prob
+      [set regimen2-dur 1 + floor (ln (random-float 1) / (- item 1 rate-viral-rebound / time-unit))]
+      [set regimen2-dur 0]
+    ]
+    [set total-rebound total-rebound - 1]
+    
+    ifelse regimen3-dur > 0
+    [
+      ifelse random-float 1 <= initial-suppression-prob
+      [set regimen3-dur 1 + floor (ln (random-float 1) / (- item 2 rate-viral-rebound / time-unit))]
+      [set regimen3-dur 0]
+    ]
+    [set total-rebound total-rebound - 1]
+    
+    ifelse regimen4-dur > 0
+    [
+      ifelse random-float 1 <= initial-suppression-prob
+      [set regimen4-dur 1 + floor (ln (random-float 1) / (- item 3 rate-viral-rebound / time-unit))]
+      [set regimen4-dur 0]
+    ]
+    [set total-rebound total-rebound - 1]
+  ]
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-  
+   
 end
 
 
