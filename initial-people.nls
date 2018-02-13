@@ -1,0 +1,396 @@
+;;; THEinitial population is generated and the population is matched to the the required US population
+;;There are 3 possible populations and can select as needed. 
+;; 1: PLWH in US in 2006 (HET + MSM )
+;; 2: PLWH in US in 2006 (HET + MSM +IDU) - the model has been written to inlcude IDUs if needed by just selecting this data below. Some of the input data might have to chnage though like the sexual behavior
+;; 3: PLWH in US in 2008 (HET + MSM )
+
+;;Some important variables
+;; sex = 1 to 6 ;; [HET-female HET-male MSM IDU-HET-female IDU-HET-male IDU-MSM]. 
+;;If population set to options 1 or 2 above then number of people in sex > 3 will be zero
+
+;;stage = 1 to 6 ;; [acute-unaware; nonacute-unaware; aware-NOT-incare; aware-InCAre-NoART; ART-NoVLS; ART-VLS]
+
+breed [initial-people infected-person]
+initial-people-own [
+  
+  age
+  sex
+  stage
+  num-partner
+  no-partner
+  casual-partner
+  ; for IDU partnership
+  IDU-ptnr-positive
+  IDU-ptnr-shared
+  num-IDU-ptnr
+  needle-sharing?
+  ;
+  partner-array ;array of length 2 that takes binary values containing information of index person's partners 
+                ;[one Tw0 ]; one- first partner of index person; Two- concurrent partner of index person;
+                ; e.g.: partner-array [1 0] implies person has only one partner; 
+                ;e.g.: partner-array [1 1] implies person has concurrent partners
+  partner-length
+  partner-counter
+  partner-infected?
+  counter-partner
+  ;casual-partners-concurrent
+  prevalence-val
+  ;trans-rate  
+  num-trans-One ; transmission to partner 1
+  num-trans-Two ; transmission to partner 2 (when concurrency exists)
+  num-trans-Casual ; transmission to casual partners 
+  num-trans-Needle;; needles transmission
+  
+  prev-num-trans
+  num-trans-incprev
+  new-infections
+  serosorting
+  infected?
+  dropOut?
+  
+  index?
+  initial?
+  sexual-Transmission?
+  ;concurrency
+  in-concurrency
+  mix?
+  bi-sexual?
+  dead
+  
+  protected-acts-unaware
+  protected-acts-casual-unaware
+  num-acts-yearly-upper
+  num-acts-yearly-lower
+  prob-anal-sex
+ 
+]
+
+to setup-initial-people
+  
+  create-initial-people number-people 
+  [set counter-partner [0 0 0];
+    set infected? true
+    set index? true
+    set initial? true
+    ;let cum-stage 
+    ;[;; HET+MSM+IDU 2006 prevalence updated with new age group
+    ;  0.001211885  0.038917244  0.111374408  0.14035724  0.149052206  0.183831571  0.184369345  0.209259934  0.243939118  0.257810775  0.261972328  0.278618301  0.281921853  0.392453518  0.577971199  0.652178187  0.674440581  0.763488881  0.763756058  0.772602989  0.801358002  0.812859994  0.816310638  0.830113015  0.830494313  0.847429821  0.898696682  0.919203403  0.925355502  0.949963544  0.950196016  0.956069996  0.978034998  0.986820989  0.989456821  1
+      
+      ;; HET+MSM 2006 prevalence updated with new age group
+      ;0.001587299  0.050972902  0.145875612  0.183836652  0.195225116  0.240778322  0.241482686  0.274083801  0.31950579  0.337674564  0.34312527  0.364927778  0.369254694  0.514026501  0.757013251  0.854207839  0.883366605  1
+      
+      ;; HET+MSM 2008 prevalence updated with new age group
+      ;0.001484396  0.047231091  0.141368389  0.152342286  0.172353511  0.239348233  0.240006934  0.269844765  0.314728565  0.319960819  0.329501988  0.361444457  0.365420272  0.502807442  0.746431532  0.774831601  0.826619964  1
+    ;]
+    ;sex: 1)female 2) male 3) MSM 4) female IDU 5) male IDU 6) MSM IDU
+    ;stage: 1)acute-unaware   2)unaware  3)aware-No-ART   4)aware-ART-not-suppressed  5)aware-ART-suppressed  
+    
+   ;;SET STAGE and RISK TYPE
+    ;    let i-ind 0
+;    let sex-ind 0
+;    let stage-ind 1
+;    let found 0
+;    
+;    while [sex-ind < 6 and found = 0]
+;    [set sex-ind sex-ind + 1
+;      set stage-ind 0
+;      while [stage-ind < 6 and found = 0]
+;      [set stage-ind stage-ind + 1
+;        if randnum <= (item i-ind cum-stage)
+;        [set sex sex-ind
+;          set stage stage-ind 
+;          set found 1
+;        ]
+;        set i-ind i-ind + 1
+;      ]
+;    ]
+    ; set stage 1
+    
+    let rand-sex random-float 1
+    let rand-stage random-float 1
+    let sex-ind 0
+    let stage-ind 0
+    let found 0
+    while [sex-ind < num-sex and found = 0]
+    [if rand-sex <= item sex-ind cum-sex
+      [set sex sex-ind + 1
+        set stage-ind 0
+        while [stage-ind < num-stage]
+        [if rand-stage <= item stage-ind (item sex-ind cum-stage)
+          [set stage stage-ind + 1
+            set found 1]
+          set stage-ind stage-ind + 1
+        ]
+      ]
+      set sex-ind sex-ind + 1
+    ]
+    
+    if sex = 0
+    [print rand-sex
+      print rand-stage
+      print stage
+      print found]
+   
+    set age 0  
+    set new-infections 0
+    ;; From those unuaware (stage 1 and stage 2) a proportion are new  infections. So setting age to distribution in new infections
+    
+    let randnum random-float 1
+    ;;Portion of those unaware are new incidence (years 2006-2008) (assuming all but 10% of new incidence MSM are unaware), so setting their age to age distribution of new incidence         
+      
+    let prop-num item (sex - 1) prop-unaware-new  ;; proportion unaware who are new incidence                                       
+       
+    ;; From those unuaware (stage 1 and stage 2) a proportion are new infections. So setting age to distribution in new infections
+    ;;assuming 10% of new incidences MSM (which constitutes 4% of aware population) are aware but not on ART. Assigning them the age of new incidences
+    if (stage = 2 and random-float 1 <= prop-num) or stage <= 1 or (stage = 3 and (sex = 3 or sex = 6) and random-float 1 <= prop-MSM-stage3-new) or (stage = 4 and (sex = 3 or sex = 6) and random-float 1 <= prop-MSM-stage4-new)
+    ;0.041494974)
+    [set new-infections 1
+      ifelse randnum <= (item 0 cum-age1)
+      [set age 13 + random 1]
+      [ifelse randnum <= (item 1 cum-age1)
+        [set age 15 + random 4]
+        [ifelse randnum <= (item 2 cum-age1)
+          [set age 20 + random 4]
+          [ifelse randnum <= (item 3 cum-age1)
+            [set age 25 + random 4]
+            [ifelse randnum <= (item 4 cum-age1)
+              [set age 30 + random 4]
+              [ifelse randnum <= (item 5 cum-age1)
+                [set age 35 + random 4]
+                [ifelse randnum <= (item 6 cum-age1)
+                  [set age 40 + random 4]
+                  [ifelse randnum <= (item 7 cum-age1)
+                    [set age 45 + random 4]
+                    [ifelse randnum <= (item 8 cum-age1)
+                      [set age 50 + random 4]
+                      [ifelse randnum <= (item 9 cum-age1)
+                        [set age 55 + random 4]
+                        [ifelse randnum <= (item 10 cum-age1)
+                          [set age 60 + random 4]
+                          [set age 65 + random 5]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+        
+    ;  ;; assuming all HIV with age >55 (0.201225872 of total population) belongs to aware group by assumption that they got infected when younger. 
+    ;  if stage >= 3 and random-float 1 <= 0.202267781 ;; HET+MSM;; 
+    ;  ;;0.197588908 ;; HET+MSM+IDU
+    ;  [set age 55 + random 15]   
+    
+    ;;assigning age to remaining people    
+    set randnum random-float 1
+    ;Set of remaining people
+    if age = 0
+    [ifelse randnum <= (item 0 cum-age2)
+      [set age 13 + random 1]
+      [ifelse randnum <= (item 1 cum-age2)
+        [set age 15 + random 4]
+        [ifelse randnum <= (item 2 cum-age2)
+          [set age 20 + random 4]
+          [ifelse randnum <= (item 3 cum-age2)
+            [set age 25 + random 4]
+            [ifelse randnum <= (item 4 cum-age2)
+              [set age 30 + random 4]
+              [ifelse randnum <= (item 5 cum-age2)
+                [set age 35 + random 4]
+                [ifelse randnum <= (item 6 cum-age2)
+                  [set age 40 + random 4]
+                  [ifelse randnum <= (item 7 cum-age2)
+                    [set age 45 + random 4]
+                    [ifelse randnum <= (item 8 cum-age2)
+                      [set age 50 + random 4]
+                      [ifelse randnum <= (item 9 cum-age2)
+                        [set age 55 + random 4]
+                        [ifelse randnum <= (item 10 cum-age2)
+                          [set age 60 + random 4]
+                          [set age 65 + random 5]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    ;; assign sexual partnerships
+    set-num-partners   
+    set-initial-partnership    
+    ;; assign IDU partnerships
+    if sex >= 4 
+    [ifelse random-float 1 <= percent-IDU-sharing
+      [set needle-sharing? true]
+      [set needle-sharing? false]
+      set-initial-num-IDU-partners
+    ]
+  
+    set dead 0
+  ]
+  
+end
+
+;;setting disease progression variables to match 2006 PLPWh: individuals in year zero can be at different CD4 count and treatment-regimen
+to set-HIV-variables-HET-MSM
+  
+  let CD4-upper 0
+  let CD4-lower 0
+  
+  ifelse stage = 1
+  [set breed people
+    set-infected-variables
+    set age-at-infection age - (random 3 / time-unit) ;; 7 weeks ~ 2 months of infection
+  ]
+  
+  [let infected true
+    let viral (item (stage - 1) viral-load-by-stage-mean)
+    let treatment false
+    let quarter-ART 0
+    let age-ART 0
+    let change-dur 0
+    let known false    
+    set dropOut? false
+    
+    if stage = 2 
+    [ifelse new-infections = 1
+      [set CD4-lower item (stage - 1) CD4-lower-new-infection
+       set CD4-upper item (stage - 1) CD4-upper-new-infection
+      ]
+      [ifelse random-float 1 < item 0 unaware-CD4-prob 
+        [set CD4-lower item 0 unaware-CD4-lower
+         set CD4-upper item 0 unaware-CD4-upper
+        ]
+        [ifelse random-float 1 < item 1 unaware-CD4-prob
+          [set CD4-lower item 1 unaware-CD4-lower
+           set CD4-upper item 1 unaware-CD4-upper
+          ]
+          [set CD4-lower item 2 unaware-CD4-lower
+           set CD4-upper item 2 unaware-CD4-upper
+          ]
+        ]
+      ]
+    ]    
+    
+    if stage = 3 
+    [ifelse new-infections = 1 ;; 10% of MSM's with new incidence are aware
+      [set CD4-lower item (stage - 1) CD4-lower-new-infection
+       set CD4-upper item (stage - 1) CD4-lower-new-infection
+      ]
+      [set CD4-lower awareNoCare-CD4-lower
+       set CD4-upper awareNoCare-CD4-upper
+       if (random-float 1 <= initial-drop-out)  ;; those who drop out of care have undergone a few regimen
+       [set change-dur 1
+        set dropOut? true
+       ]       
+      ]
+      set known true
+    ]
+    
+    if stage = 4
+    [ifelse new-infections = 1 ;; 10% of MSM's with new incidence are aware
+      [set CD4-lower item (stage - 1) CD4-lower-new-infection
+       set CD4-upper item (stage - 1) CD4-upper-new-infection
+      ]
+      [ifelse random-float 1 <= item 0 inCareNoART-CD4-prob;; assuming 500 CD4 count is guideline for treatment
+        [set CD4-lower item 0 inCareNoART-CD4-lower
+         set CD4-upper item 0 inCareNoART-CD4-upper
+        ]
+        [ifelse random-float 1 <= item 1 inCareNoART-CD4-prob
+          [set CD4-lower item 1 inCareNoART-CD4-lower
+           set CD4-upper item 1 inCareNoART-CD4-upper
+          ]
+          [set CD4-lower item 2 inCareNoART-CD4-lower
+           set CD4-upper item 2 inCareNoART-CD4-upper
+          ]
+        ]
+        
+      ]    
+    set known true
+    set linked-to-care? true
+    ]
+    
+    if stage >= 5
+    [set treatment true 
+      set CD4-lower ART-CD4-lower
+      set CD4-upper ART-CD4-upper
+      set quarter-ART 1
+      set age-ART age
+      set change-dur 1
+      set known true
+    ]    
+    
+    set breed people
+    set-infected-variables
+    set infected-previous-quarter? infected             
+    set infected? infected
+    set aware-previous-quarter? known
+    set aware? known
+    
+    if stage >= 3
+    [set-CD4-diagnosis]
+    
+    if change-dur = 1
+    [;;setting CD4 count to zero so total-regimen could be set, whihc is set only when CD4 count reaches that for treatment 
+      set CD4-count 0
+      ;;stage 4 and 5 indicates on ART, randomly choosing length of time already on ART
+      let age-add 0
+      let randnum-dur random 3
+      if randnum-dur <= 0
+      [set age-add age-add + regimen1-dur * time-unit
+       set regimen1-dur 0]
+      if randnum-dur <= 1
+      [set age-add age-add + regimen2-dur * time-unit
+       set regimen2-dur 0]
+      if randnum-dur <= 2
+      [set age-add age-add + regimen3-dur * time-unit
+       set regimen3-dur 0]
+      if randnum-dur <= 3
+      [set age-add age-add + regimen4-dur * time-unit
+       set regimen4-dur 0
+        ;;if all regimens have been used up will go on salvage therapy. Setting prev-total-regimen to 1 indicating has been on ART 
+       set prev-total-regimen 1
+      ]
+      set-total-regimen 
+ 
+      ifelse random-float 1 < item 0 CD4-at-ART-prob
+      [set CD4-ART item 0 CD4-at-ART-lower + random (item 0 CD4-at-ART-upper - item 0 CD4-at-ART-lower)]
+      [ifelse random-float 1 < item 1 CD4-at-ART-prob
+        [set CD4-ART item 1 CD4-at-ART-lower + random (item 1 CD4-at-ART-upper - item 1 CD4-at-ART-lower)]
+        [set CD4-ART item 1 CD4-at-ART-lower + random (item 2 CD4-at-ART-upper - item 2 CD4-at-ART-lower)]
+      ];;CD4 count at which ART actually started : might be different from  CD4-to-start-ART because 
+       ;of CD4 decline might not exactly coincide with the required start
+        
+      if stage >= 5
+      [set quarter-ART-start 1
+       set age-ART-start age - age-add
+       set linked-to-care? true
+      ]
+      
+    ]
+    
+    set age-at-infection age - 1;; random but difference of 1 to separate acute phase
+    set prev-prev-on-treatment? treatment
+    set prev-on-treatment? treatment
+    set on-treatment? treatment
+    set viral-load viral
+    set-viral-load-stratum
+    set prev-CD4-count CD4-lower + random (CD4-upper - CD4-lower)
+    set CD4-count prev-CD4-count
+    set-CD4-stratum    
+  ]
+  
+  set trans-year 0
+  
+end
+
+
+

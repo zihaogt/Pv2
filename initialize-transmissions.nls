@@ -1,147 +1,218 @@
 to initialize-transmissions [trans-value partner-num]
-  
+    
   let p-sex 0
   let p-mix? false
   
+;  ifelse partner-num <= 3 ;; if sexual transmission 
+;  [
+;    ifelse sex = 3 or sex = 6 ;;if MSM
+;    [ifelse mix? = true 
+;      [set p-sex sex - 2 ;;if MSM and bisexual and there is partner mixing, partner is female
+;        set p-mix?  true]
+;      [set p-sex sex] ;;else MSM-MSM
+;    ]
+;   
+;    [ifelse sex = 1 or sex = 4 ;;if HEF
+;      [set p-sex  sex + 1] ;;partner is HEM
+;      [set p-sex  sex - 1] ;;else sex = 2 or 5 and partner is HEF
+;    ]  
+;  ]
+;  
+;  [;; if needle-sharing transmission
+;    let sex-IDU random-float 1 ;; using proportion of IDU in female male and MSM as weighting factor to determine sex of newly infected person
+;    ifelse sex-IDU <= .28
+;    [set p-sex 4] 
+;    
+;    [ifelse sex-IDU <= .79
+;      [set p-sex 5]
+;      [set p-sex 6]
+;    ] 
+;  ]  
+
   ifelse partner-num <= 3 ;; if sexual transmission
   [
-    ifelse sex = 3 or sex = 6
-    [ifelse mix? = true 
-      [set p-sex sex - 2
-        set p-mix?  true]
-      [set p-sex sex]
+    if sex = 3 or sex = 6
+    [
+      ifelse mix? = true 
+      [
+        ifelse random-float 1 <= (1 - item 0 prevalence) * perc-HET-FEM / ((1 - item 0 prevalence) * perc-HET-FEM + (1 - item 3 prevalence) * perc-IDU-FEM)
+        ;ifelse random-float 1 <= num-HET-FEM / (num-HET-FEM + num-IDU-FEM)
+        [set p-sex 1]
+        [set p-sex 4]
+        set p-mix? true
+      ]
+      [
+        ifelse random-float 1 <= (1 - item 2 prevalence) * perc-MSM / ((1 - item 2 prevalence) * perc-MSM + (1 - item 5 prevalence) * perc-IDU-MSM)
+        ;ifelse random-float 1 <= num-MSM / (num-MSM + num-IDU-MSM)
+        [set p-sex 3]
+        [set p-sex 6]
+      ]
     ]
     
-    
-    [ifelse sex = 1 or sex = 4
-      [set p-sex  sex + 1]
-      [set p-sex  sex - 1]
+    if sex = 1 or sex = 4
+    [
+      ifelse random-float 1 <= (1 - item 1 prevalence) * perc-HET-MEN / ((1 - item 1 prevalence) * perc-HET-MEN + (1 - item 4 prevalence) * perc-IDU-MEN)
+      ;ifelse random-float 1 <= num-HET-MEN / (num-HET-MEN + num-IDU-MEN)
+      [set p-sex 2]
+      [set p-sex 5] 
     ]
-  ]
+    
+    if sex = 2 or sex = 5
+    [
+      ifelse random-float 1 <= (1 - item 0 prevalence) * perc-HET-FEM / ((1 - item 0 prevalence) * perc-HET-FEM + (1 - item 3 prevalence) * perc-IDU-FEM)
+      ;ifelse random-float 1 <= num-HET-FEM / (num-HET-FEM + num-IDU-FEM)
+      [set p-sex 1]
+      [set p-sex 4]  
+    ]
+    
+  ] 
+  
   [
-    ;; if needle-sharing transmission
-    let sex-IDU random-float 1 ;; using proportion of IDU in female male and MSM as weighting factor to determine sex  of newly infected person
-    ifelse sex-IDU <= .28
-    [set p-sex 4] 
-    [ifelse sex-IDU <= .79
+    let randnum random-float 1
+    ifelse item 3 (item (sex - 1) IDU-mixing) >= randnum
+    [set p-sex 4]
+    [
+      ifelse item 3 (item (sex - 1) IDU-mixing) + item 4 (item (sex - 1) IDU-mixing) >= randnum
       [set p-sex 5]
       [set p-sex 6]
-    ]  
+    ]
   ]
-
-    
   
   let p-partner-length 0
   let p-partner-counter 0
   
   if partner-num <= 2
-    [set p-partner-length item (partner-num - 1) partner-length
-      set p-partner-counter item (partner-num - 1) partner-counter
-    ]
+  [
+    set p-partner-length item (partner-num - 1) partner-length
+    set p-partner-counter item (partner-num - 1) partner-counter
+  ]
   
   let p-age (age - 3) + random 6 ;; transmits to a person 3 years younger or older 
-  if age <= 19
-  [set p-age (age - 1) + random 2]
   
-;  if age <= 14 
+  ifelse partner-num <= 3
+  [if age <= 19
+    [set p-age (age - 1) + random 2] 
+    ;  if age <= 14 
 ;    [set p-age 13 + random 1]
 ;  if age > 14 and age <= 16
-;    [set p-age 13 + random 3]
+    ;    [set p-age 13 + random 3]
 ;  if age > 16 and age <= 19
 ;    [set p-age 13 + random 6]
-  
-  if p-age < 13
+    if p-age < 13
     [set p-age 13] 
-  
-  if p-age > 70
+    if p-age > 70
     [set p-age 70] 
+  ]
+  ;; for IDU partners, no particular preferences on ages
+  [set p-age 13 + random 52]
+  ;if trans-value > count people with [infected? = false]
+  ;[print sex
+  ;  print partner-num]
   
   ask n-of (trans-value) people with [infected? = false]
-    [ set xcor 10
-      set ycor 10
-      set age round (p-age)
-      set sex p-sex 
-      set-infected-variables
+  [
+    set xcor 10
+    set ycor 10
+    set age round (p-age)
+    set initial? false
+    set sex p-sex 
+    
+    set-infected-variables
       
-      if sex = 0 [ print "BLUNDER- SEX cant be 0"]
-      set mix? p-mix?
+    if sex = 0 
+    [print "BLUNDER- SEX cant be 0"]
       
-      set infected? true
-      set num-trans-One 0
-      set num-trans-Two 0
-      set num-trans-Casual 0
-      set num-trans-Needle 0
-      set-num-partners
-      set-initial-partnership
-      set index-patient? false
+    set mix? p-mix?
+      
+    set infected? true
+    set num-trans-One 0
+    set num-trans-Two 0
+    set num-trans-Casual 0
+    set num-trans-Needle 0
+    
+    set-num-partners
+    set-initial-partnership
+    
+    if sex >= 4
+    [set-trans-num-IDU-partners partner-num]
+      
+    set index-patient? false
      ; set-next-test
-      set stage 1 
-      ifelse sex <= 3
-     [ set sexual? true]
-     [set sexual? false]
+    set stage 1 
       
+    if partner-num <= 2 ;; partner-num = 1 if main partner; 2 if concurrent partner; 3 if casual partner 
+    [set partner-length replace-item (partner-num - 1) partner-length p-partner-length
+      set partner-counter replace-item (partner-num  - 1) partner-counter p-partner-counter
+      set partner-infected? replace-item (partner-num - 1) partner-infected? true
+      set partner-array replace-item (partner-num - 1) partner-array 1
+    ]
       
-      if partner-num <= 2 ;; partner-num = 1 if main partner; 2 if concurrent partner; 3 if casual partner 
-        [
-          set partner-length replace-item (partner-num - 1) partner-length p-partner-length
-          set partner-counter replace-item (partner-num  - 1) partner-counter p-partner-counter
-          set partner-infected? replace-item (partner-num - 1) partner-infected? true
-          set partner-array replace-item (partner-num - 1) partner-array 1
-        ]
-        if partner-num = 2 [ set in-concurrency  1]
+    if partner-num = 2 
+    [set in-concurrency 1]
       
-      ;;MODELING CONCURRENCY
+    ;;MODELING CONCURRENCY
       
-      ;; if 'this' newly infected partner had a concurrent partner who was also positive 
-      ;; then since 'this' person is infected now the concurrent partner cannot infect so find that concurrent partner and set his/her partner as positive
-      ;; if concurrent partner exists but not positive the transmission is handled in the procedure ' setup-trans-initial-ppl-HET-MSM'
-      let other-partner 0; if concurrent, casual, or needle-sharing partner got infected
-      if partner-num = 1 [ set other-partner 1]; ; if main partner got infected
-      if (item other-partner partner-array = 1 and  item other-partner partner-infected? = true )
-        [
-          ; print 1
-          ;randomly find another person who has a negative partner (and matching age and sex) and set that partner as positive
-          let dummy-sex 0
-          ifelse sex = 3 or sex = 6
-          [set dummy-sex sex]
-          [ifelse sex = 1 or sex = 4
-            [set dummy-sex  sex + 1]
-            [set dummy-sex  sex - 1]
-          ]
-          
-          let individual one-of other people with 
-          [infected? = true and item other-partner partner-array = 1 and item other-partner partner-infected? = false and age <= p-age + 10 and age >= p-age - 10 and sex = dummy-sex]
-          
-          ifelse individual != nobody 
-          [ ask  individual 
-            [
-            set partner-infected? replace-item  other-partner partner-infected? true
-            
-            ]
-            ; print "MATCH FOUND  FOR CONCURRENT PARTNER "
-          ]
-          [
-            print "MATCH NOT FOUND FOR CONCURRENT PARTNER"
-          ]
-        ]
+    ;; if 'this' newly infected partner had a concurrent partner who was also positive 
+    ;; then since 'this' person is infected now the concurrent partner cannot infect so find that concurrent partner and set his/her partner as positive
+    ;; if concurrent partner exists but not positive the transmission is handled in the procedure ' setup-trans-initial-ppl-HET-MSM'
+    let other-partner 0; if concurrent, casual, or needle-sharing partner got infected
+    
+    if partner-num = 1
+    [set other-partner 1]; ; if main partner got infected
       
-      if partner-num >= 3 ;; infected person is  a casual partner of the index person. Check if this guy has a concurrent partner as well
-        [
-          if (item 1 partner-array = 1 and  item 1 partner-infected? = true);;checking if newly infected person has a long term partner who is also positive
-            [
-              ;print 2
-              ;randomly find another person who has a negative partner (and matching age and sex) and set that partner as positive
-              let dummy-sex 0
-              ifelse sex = 3 or sex = 6
-              [set dummy-sex sex]
-              [ifelse sex = 1 or sex = 4
-                [set dummy-sex  sex + 1]
-                [set dummy-sex  sex - 1]
-              ]
-              
-              ;;Do not have to discount casual partners because in estimating transmssion to casual partners the prevalence is used to determine positive status
-              ;; Though prevalence is used to set HIV status of main partners as well, it is done at beginning of partnership. Concurrency will 
-              ;;change their status during the partnership
+    if (item other-partner partner-array = 1 and item other-partner partner-infected? = true)
+    [manage-main-concurrency p-age other-partner
+     ]
+      
+    if partner-num >= 3 ;; infected person is a casual partner of the index person. Check if this guy has a concurrent partner as well
+    [manage-casual-concurrency p-age]
+    
+    if sex >= 4
+    [manage-IDU-concurrency]
+    
+  ]
+  
+end
+
+to manage-main-concurrency [p-age other-partner] 
+  ; print 1
+       ;randomly find another person who has a negative partner (and matching age and sex) and set that partner as positive
+  let dummy-sex 0
+  ifelse sex = 3 or sex = 6
+  [set dummy-sex sex]
+  [ifelse sex = 1 or sex = 4
+    [set dummy-sex sex + 1]
+    [set dummy-sex sex - 1]
+  ]
+  
+  let individual one-of other people with 
+  [infected? = true and item other-partner partner-array = 1 and item other-partner partner-infected? = false and age <= p-age + 10 and age >= p-age - 10 and (sex = dummy-sex or sex = dummy-sex + 3 or sex = dummy-sex - 3)]
+        
+  ifelse individual != nobody 
+  [ask individual 
+    [set partner-infected? replace-item other-partner partner-infected? true]
+    ; print "MATCH FOUND  FOR CONCURRENT PARTNER "
+  ]
+  [;print "MATCH NOT FOUND FOR CONCURRENT PARTNER"
+  ]
+  
+end
+
+to manage-casual-concurrency [p-age]
+  
+  if (item 1 partner-array = 1 and item 1 partner-infected? = true);;checking if newly infected person has a long term partner who is also positive
+  [;print 2
+   ;randomly find another person who has a negative partner (and matching age and sex) and set that partner as positive
+    let dummy-sex 0
+    ifelse sex = 3 or sex = 6
+    [set dummy-sex sex]
+    [ifelse sex = 1 or sex = 4
+      [set dummy-sex  sex + 1]
+      [set dummy-sex  sex - 1]
+    ]             
+    ;;Do not have to discount casual partners because in estimating transmssion to casual partners the prevalence is used to determine positive status
+    ;; Though prevalence is used to set HIV status of main partners as well, it is done at beginning of partnership. Concurrency will 
+    ;;change their status during the partnership
 ;              if random-float 1 < 0.25 ;; with certain probability this casual partner is another HIV positive person's casual partner as well
 ;              [let individual one-of other initial-people-HET-MSM with [infected? = true and age <= p-age + 10 and age >= p-age - 10 and sex = dummy-sex]
 ;                ifelse individual != nobody 
@@ -157,23 +228,41 @@ to initialize-transmissions [trans-value partner-num]
               ;;'this' casual partner could have a long-term partner as well. SO check if that long term partner is positive
               ;;If so, since'this' person is infected now the long-term partner cannot infect 
               ;; if concurrent partner exists but not positive the transmission is handled in the procedure ' setup-trans-initial-ppl-HET-MSM'
-              let individual one-of other people with 
-              [infected? = true and item 1 partner-array = 1 and item 1 partner-infected? = false and age <= p-age + 10 and age >= p-age - 10 and sex = dummy-sex]
-              ifelse individual != nobody 
-              [
-                ask individual [
-                  set partner-infected? replace-item 1 partner-infected? true
-                ]
-                ;print "MATCH FOUND FOR MAIN PARTNER"
-              ]
-              [
-                print "MATCH NOT FOUND FOR MAIN PARTNER"
-              ]
-            ]
-        ]
-      
-      
-      ;]
-   ]
+    let individual one-of other people with 
+    [infected? = true and item 1 partner-array = 1 and item 1 partner-infected? = false and age <= p-age + 10 and age >= p-age - 10 and (sex = dummy-sex or sex = dummy-sex + 3 or sex = dummy-sex - 3)]
+    ifelse individual != nobody 
+    [ask individual 
+      [set partner-infected? replace-item 1 partner-infected? true]
+      ;print "MATCH FOUND FOR MAIN PARTNER"
+    ]
+    [;print "MATCH NOT FOUND FOR MAIN PARTNER"
+    ]
+  ]
+  
 end
 
+to manage-IDU-concurrency  
+  
+  let ind 0      
+  let val sum IDU-ptnr-positive - 1
+  ifelse val < 0
+  []
+  [if val >= 1
+    [let temp-avail count people with [infected? = true and sex >= 4 and sum IDU-ptnr-positive < num-IDU-ptnr] 
+      if temp-avail >= 2
+      [if val >= temp-avail - 1
+        [set val temp-avail - 1]
+        ask n-of (val) other people with [infected? = true and sex >= 4 and sum IDU-ptnr-positive < num-IDU-ptnr]
+        [set ind 0
+          let num-positive sum IDU-ptnr-positive
+          while [sum IDU-ptnr-positive = num-positive]
+          [if item ind IDU-ptnr-positive = 0
+            [set IDU-ptnr-positive replace-item ind IDU-ptnr-positive 1]
+            set ind ind + 1
+          ] 
+        ]
+      ]           
+    ]
+  ]
+      
+end 
