@@ -111,7 +111,9 @@ to  setup-trans-IDU-acute [week]
   print stage]
   
   let adjust-time 52 / 12 ;; for weekly transmissions instead of month  
-  let week-rate-increase item (week - 1) acute-rate-increase-week;; higher transmission in acute stage
+ ;let week-rate-increase item (week - 1) acute-rate-increase-week;; higher transmission in acute stage
+  let week-rate-increase 0
+  
   ifelse sex = 6
   ; [ set acute-rate-increase item (week - 1) [12.0  12  12.0  12.0  12     12   12   12  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
   [set week-rate-increase item (week - 1) acute-rate-increase-week-MSM] ;; MSM: higher transmission in acute stage

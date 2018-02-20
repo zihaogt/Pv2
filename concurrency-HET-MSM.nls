@@ -68,12 +68,12 @@ to set-num-partners
   let i 0
   let found 0
   
-  while [i < length (age-partner-dist) and found = 0]
-  [if age <= item i age-partner-dist
+  while [i < length (age-sexual) and found = 0]
+  [if age <= item i age-sexual
     [set found 1
       set num-partner item i (item (sex - 1) main-partners) - 1 ;; -1 because looking at length of partnership (i.e., considering have a partner and how long for another episode/partner)
      ;set casual-partner item i (item (sex - 1) casual-partners) 
-      set no-partner item i (item (sex - 1) no-partners) 
+      set no-partner item i (item (sex - 1) no-partners-monthly) 
       ifelse (sex = 3 or sex = 6) and random-float 1 <= prob-casual
       [;;if casual partners only median 5, min 1, max 10
         ifelse random-float 1 <= (prob-casual-only / prob-casual)
@@ -109,34 +109,34 @@ to set-num-partners
   set prob-anal-sex 0
   set found 0
   set i 0
-  let j 1 * length (age-sex-acts)
+  let j 1 * length (age-sexual)
   
-  if sex =  1 ;; if HET female all others have values same as that for HET male
-  [set j 0 * length (age-sex-acts)]
+  if sex = 1 or sex = 4;; if HET female all others have values same as that for HET male
+  [set j 0 * length (age-sexual)]
   
-  while [i < length (age-sex-acts) and found = 0]
-  [if age < item i age-sex-acts 
+  while [i < length (age-sexual) and found = 0]
+  [if age < item i age-sexual 
     [set found 1
       set num-acts-yearly-upper (item (i + j) num-sex-acts-upper) 
       set num-acts-yearly-lower (item (i + j) num-sex-acts-lower) 
       set prob-anal-sex (item (i + j ) prop-anal-acts-HET)
       set protected-acts-unaware (item (i + j) condom-use-HET)
-      set protected-acts-casual-unaware (item (i + 2 * length (age-sex-acts)) condom-use-HET )
+      set protected-acts-casual-unaware (item (i + 2 * length (age-sexual)) condom-use-HET)
     ]
     set i i + 1
   ]
   
   ;;if MSM 50% insertive and 50% receptive
   if sex = 3 or sex = 6 
-  [set prob-anal-sex 0.5    
+  [set prob-anal-sex prop-insertive
     set i 0
     set found 0
       
-    while [i < length (age-condom-use-MSM) and found = 0]
-    [if age < item i age-condom-use-MSM 
+    while [i < length (age-sexual) and found = 0]
+    [if age < item i age-sexual 
       [set found 1
         set protected-acts-unaware (item i condom-use-MSM)
-        set protected-acts-casual-unaware (item (i + length (age-condom-use-MSM)) condom-use-MSM )
+        set protected-acts-casual-unaware (item (i + length (age-sexual)) condom-use-MSM)
       ]
       set i i + 1
     ]     
@@ -443,7 +443,9 @@ to  setup-trans-acute [week]
 
   set mix? false
   
-  let week-increase-rate item (week - 1) acute-rate-increase-week;; higher transmission in acute stage
+ ; let week-increase-rate item (week - 1) acute-rate-increase-week;; higher transmission in acute stage
+  let week-increase-rate 0
+  
   ifelse sex = 3 or sex = 6
  ; [ set acute-rate-increase item (week - 1) [12.0  12  12.0  12.0  12     12   12   12  1.0  1.0  1.0  1.0]] ;; MSM: higher transmission in acute stage
   [set week-increase-rate item (week - 1) acute-rate-increase-week-MSM] ;; MSM: higher transmission in acute stage

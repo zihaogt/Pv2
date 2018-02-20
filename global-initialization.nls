@@ -93,12 +93,12 @@ globals
   num-IDU-MSM
   
   sex-dist-target
-  sex-dist-before
-  sex-dist-after
-  cum-sex
-  cum-stage 
-  cum-age1
-  cum-age2  
+;  sex-dist-before
+;  sex-dist-after
+  cummulative-sex
+  cummulative-stage 
+  cummulative-age1
+  cummulative-age2  
   prop-unaware-new
   prop-MSM-stage3-new
   prop-MSM-stage4-new
@@ -170,7 +170,6 @@ globals
   percent-IDU-sharing
   percent-needles-shared 
   prob-ptnr-sharing
-  dry-run-prob-ptnr-sharing
   percent-sharing-decline
   
   max-ptnr
@@ -183,6 +182,7 @@ globals
   IDU-mixing 
   
  ;OI and death variables
+  OI-risk-monthly
   OI-probabilities
   death-prob-sexual-no-AIDS
   death-prob-sexual-AIDS
@@ -199,7 +199,7 @@ globals
   trans-rate-needle-dry-run
   trans-rate-needle-after-dry-run
   acute-rate-increase-base
-  acute-rate-increase-week
+ ;acute-rate-increase-week
   acute-rate-increase-week-MSM
   acute-rate-increase-week-HET
   reduction-VLS-trans-rate
@@ -226,9 +226,12 @@ globals
   HIV-genotype-test-cost
   
  ;sexual partnerships and behaviors
-  age-partner-dist
+
+  age-sexual
+  
   main-partners
-  no-partners
+  no-partners-yearly
+  no-partners-monthly ;derived
   prob-casual
   prob-casual-only
   prop-concurrency
@@ -236,15 +239,15 @@ globals
   prob-serosorting
   prob-bisexual 
   
-  age-sex-acts
   num-sex-acts-upper
   num-sex-acts-lower
   prop-anal-acts-HET
+  prop-insertive
   condom
   condom-use-HET
   condom-use-MSM
   condom-100perc
-  age-condom-use-MSM
+
   reduction-unprotected-aware
 ;  prep-effectiveness
 ;  prep-cov-casual
@@ -261,7 +264,7 @@ globals
   current-care-noART
   current-ARTsuppressed
   care-at-diag
-  care-at-diag-ByAge
+ ;care-at-diag-ByAge
   actual-age-dist-incidence
   
   matrix_unaware
@@ -433,7 +436,7 @@ to update-stage-props [i]
   set current-care-noART matrix:get-row matrix_careNoART i
   set current-ARTsuppressed matrix:get-row matrix_ARTVLS i
   set care-at-diag matrix:get-row matrix_LinkageToCare i
-  set care-at-diag-ByAge matrix:get-row matrix_LinkageToCare_ByAge i
+ ;set care-at-diag-ByAge matrix:get-row matrix_LinkageToCare_ByAge i
   
 end
 
@@ -626,7 +629,7 @@ to setup-static-globals
   set current-ARTsuppressed matrix:get-row matrix_ARTVLS 0;0.19
   set actual-age-dist-incidence matrix:get-row matrix_ageDistIncidence 0
   set care-at-diag  matrix:get-row matrix_LinkageToCare 0;0.77 
-  set care-at-diag-ByAge  matrix:get-row matrix_LinkageToCare_ByAge 0;0.77 
+ ;set care-at-diag-ByAge  matrix:get-row matrix_LinkageToCare_ByAge 0;0.77 
   
   ; age and CD4 upper and lower bound for reporting
   set age-LB [13 25 35 45 55]
@@ -651,48 +654,37 @@ to setup-static-globals
   ;;Number of HET-male, female and MSM in total population assuming 97% are hetrosexual and rest MSM. Of hetrosexual half are male and rest half female.
   ;;469.4 is the rate of PLWH per 100,000 US population in 2008
   set factor 0.5; assuming 50% of population is high risk
-  set overall-prevalence 441 / 100000 ; 2006 overall prevalence in general population
+  set overall-prevalence 441 / 100000 ; 2006 overall prevalence in general population, for 2012 prevalence per 100,000 is 573, for 2008 it is 470 
   set perc-HET-FEM 0.5 * factor * (1 - (perc-IDU-FEM + perc-IDU-MEN + perc-MSM + perc-IDU-MSM))
   set perc-HET-MEN perc-HET-FEM
   set perc-MSM 0.025 * (1 - 0.07)
   set perc-IDU-FEM 0.012
   set perc-IDU-MEN 0.018
   set perc-IDU-MSM 0.025 * 0.07
-  set num-HET-FEM (perc-HET-FEM * number-people / overall-prevalence)
-  set num-HET-MEN num-HET-FEM
-  set num-MSM (perc-MSM * number-people / overall-prevalence) ;; assuming 2% of US population are MSM
-  set num-IDU-FEM (perc-IDU-FEM * number-people / overall-prevalence)
-  set num-IDU-MEN (perc-IDU-MEN * number-people / overall-prevalence)
-  set num-IDU-MSM (perc-IDU-MSM * number-people / overall-prevalence)
-  ;  set num-HET-FEM (0.5 * (1 - (0.03 + 0.012 + 0.018)) * number-people * factor * 100000 / 469.4 ) 
-  ;  set num-HET-MEN (0.5 * (1 - (0.03 + 0.012 + 0.018)) * number-people * factor * 100000 / 469.4) 
-  ;  set num-MSM (0.03 * ( 1 - 0.02) * number-people  *  100000 / 469.4) ;; assuming 3% of US population are MSM
-  ;  set num-IDU-FEM (0.012 * number-people * 100000 / 469.4)
-  ;  set num-IDU-MEN (0.018 * number-people * 100000 / 469.4)
-  ;  set num-IDU-MSM (0.03 * 0.02 * number-people * 100000 / 469.4)
-  ;; for 2012 prevalence per 100,000 is 573;; fpr 2008 it is 470 
+  
+  set-num-population
   
   set sex-dist-target ; 2006 distribution of PLWH by sexual risk groups
   [0.1838 0.0948 0.4849 0.0666 0.1200 0.0500]
  
-  set cum-sex n-values num-sex [0] ; calculating cumulative distribution of sexual risk groups 
+  set cummulative-sex n-values num-sex [0] ; calculating cumulative distribution of sexual risk groups 
   let sex-ind 0
   let temp 0
   while [sex-ind < num-sex]
   [
     set temp temp + item sex-ind sex-dist-target
-    set cum-sex replace-item sex-ind cum-sex temp
+    set cummulative-sex replace-item sex-ind cummulative-sex temp
     set sex-ind sex-ind + 1
   ]
   
-  set cum-sex replace-item (num-sex - 1) cum-sex 1 
+  set cummulative-sex replace-item (num-sex - 1) cummulative-sex 1 
   
   set age-group 
   [12 24 34 44 54 70]
   set actual-age-dist-PLWH 
   [0.051 0.161 0.353 0.304 0.131]
 
-  set cum-stage 
+  set cummulative-stage 
   [
     [0.0066	0.2117	0.6059	0.7635	0.8108	1.0000]
     [0.0057	0.2683	0.6341	0.7805	0.8244	1.0000]
@@ -702,7 +694,7 @@ to setup-static-globals
     [0.0046	0.1220	0.5610	0.7366	0.7893	1.0000]
   ]  
   
-  set cum-age1 
+  set cummulative-age1 
   [
     ;;2006 HET+MSM+IDU updated with new age group (updated with NHSS vol. 17 no.3)
     ;0.052 0.212 0.564 0.868 0.973 1
@@ -712,7 +704,7 @@ to setup-static-globals
     ;;2008 updated with new age group
     ;0.001  0.041  0.211  0.361  0.511  0.661  0.781  0.891  0.956  0.996  1  1
   ]
-  set cum-age2 
+  set cummulative-age2 
   [
     ;; HET+MSM+IDU 2006 updated with new age group
     0.00261732 0.006823137 0.01342271 0.059541006 0.139662051 0.289628793 0.512083389 0.709279636 0.849658024 0.929011911 0.967894103 1     
@@ -737,16 +729,16 @@ to setup-static-globals
   ;
   
   ;;ADDED A LAST AGE GROUP 65- 70
-  set age-partner-dist 
-  [14 17 19 24 29 34 39 44 54 60 70]
+  set age-sexual
+  [15 18 20 25 30 35 40 45 50 55 60 65 71] 
   set main-partners 
   [
-    [1.75 1.75 1.68 1.47 1.26 1.19 1.09 1.10 1.10 1.10 1.10] ;;NSFG HET FEmale
-    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21] ;;NSFG HET male
-    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21] ;;NSFG HET male
-    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21] ;;NSFG HET male
-    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21] ;;NSFG HET male
-    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21] ;;NSFG HET male
+    [1.75 1.75 1.68 1.47 1.26 1.19 1.09 1.10 1.10 1.10 1.10 1.10 1.10] ;;NSFG HET female
+    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21 1.21 1.21] ;;NSFG HET male
+    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21 1.21 1.21] ;;NSFG HET male
+    [1.75 1.75 1.68 1.47 1.26 1.19 1.09 1.10 1.10 1.10 1.10 1.10 1.10] ;;NSFG HET female
+    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21 1.21 1.21] ;;NSFG HET male
+    [1.74 1.74 1.86 1.69 1.45 1.29 1.30 1.21 1.21 1.21 1.21 1.21 1.21] ;;NSFG HET male
   ]
   ; set concurrency-length   [1 3 6 9 12 15 18 24 36 ]
   ; set concurrency-length-prob [ 0.31  0.5  0.61  0.7  0.74  0.77  0.79  0.84  0.89] ;;>0.89 will take length of normal partnership
@@ -788,58 +780,50 @@ to setup-static-globals
 ;# casual partners  1  5  5  15  28
 ;  2 to 3  15  25  55  28
 ;  >=4  80  70  30  44
- 
-  ;;rows represent female, male, MSM, IDU-female, IDU-male, IDU-MSM
-  set no-partners 
-  [
-    ;;monthly
-    [0.84 0.84 0.83 0.78 0.79 0.78 0.80 0.82 0.82 0.82 0.82 0.82 0.82]
-    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
-    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
-    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
-    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
-    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
-    ;;yearly
-    ; [0.13 0.13 0.10 0.05 0.06 0.05 0.07 0.09 0.09 0.09 0.09];;NSFG HET FEmale
-    ; [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09];;NSFG HET male
-    ; [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09];;NSFG HET male
-    ; [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09];;NSFG HET male
-    ; [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09];;NSFG HET male
-    ; [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09];;NSFG HET male
-  ]    
-  ;0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1] 
   
-  set age-sex-acts 
-  [18 20 25 30 40 50 60 70]
+  ;;rows represent female, male, MSM, IDU-female, IDU-male, IDU-MSM
+  set no-partners-yearly 
+  [
+    [0.13 0.13 0.10 0.05 0.06 0.05 0.07 0.09 0.09 0.09 0.09 0.09 0.09];;NSFG HET female
+    [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09 0.09 0.09];;NSFG HET male
+    [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09 0.09 0.09];;NSFG HET male
+    [0.13 0.13 0.10 0.05 0.06 0.05 0.07 0.09 0.09 0.09 0.09 0.09 0.09];;NSFG HET female
+    [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09 0.09 0.09];;NSFG HET male
+    [0.18 0.18 0.12 0.07 0.06 0.05 0.06 0.09 0.09 0.09 0.09 0.09 0.09];;NSFG HET male
+  ]  
+  
+  set-no-partners-monthly
+  
   set num-sex-acts-upper 
   [
-    41 127 127 108 93 86 73 62 ;; female NSSHBS
-    60 119 119 110 104 95 73 67  ;;male  NSSHBS ;; applying this to MSM and IDU's as well
+    41 41 127 127 108 93 93 86 86 73 73 62 62 ;; female NSSHBS
+    60 60 119 119 110 104 104 95 95 73 73 67 67  ;;male  NSSHBS ;; applying this to MSM and IDU's as well
   ]
+  
   set num-sex-acts-lower 
   [
-    20 73 62 51 48 40 32 35;;female NSSHBS
-    30 68 63 59 52 39 36 24;;male NSSHBS ;; applying this to MSM and IDU's as well
+    20 20 73 73 62 51 51 48 48 40 32 35 35;;female NSSHBS
+    30 30 68 68 63 59 59 52 39 36 36 24 24;;male NSSHBS ;; applying this to MSM and IDU's as well
   ]
   
   ;;for heterosexual IDU and non-IDU
   set  prop-anal-acts-HET 
   [
-    0.07 0.07 0.07 0.08 0.06 0.04 0.02 0.04;;female
-    0.06 0.06 0.06 0.11 0.07 0.09 0.06 0.05;;male
+    0.07 0.07 0.07 0.07 0.08 0.06 0.06 0.04 0.04 0.02 0.02 0.04 0.04;;female
+    0.06 0.06 0.06 0.06 0.11 0.07 0.07 0.09 0.09 0.06 0.06 0.05 0.05;;male
   ]
   ;;for MSM 50% insertive and 50% receptive anal sex
   
+  set prop-insertive .5
   set prob-bisexual .21
   set condom .8
   ;;for heterosexual IDU and non-IDU
-  set age-condom-use-MSM 
-  [18 20 25 30 40 50 60 70] ;; asssuming maximum age 70
+
   set condom-use-HET 
   [
-    0.58 0.39 0.39 0.27 0.18 0.14 0.11 0.09  ;;female
-    0.79 0.45 0.45 0.28 0.26 0.21 0.10 0.06  ;;male 
-    0.57 0.57 0.57 0.54 0.54 0.53 0.52 0.52; casual partner (taking from casual for NHBS MSM);; as of now no casaul partners for HET non-IDU's
+    0.58 0.58 0.39 0.39 0.27 0.18 0.18 0.14 0.14 0.11 0.11 0.09 0.09  ;;female
+    0.79 0.79 0.45 0.45 0.28 0.26 0.26 0.21 0.21 0.10 0.10 0.06 0.06 ;;male 
+    0.57 0.57 0.57 0.57 0.54 0.54 0.54 0.53 0.53 0.52 0.52 0.52 0.52; casual partner (taking from casual for NHBS MSM);; as of now no casaul partners for HET non-IDU's
    ;0.87 0.39 0.47 0.44 0.28 0.26 0.25    ;;NSSHB casual partners
   ]
   
@@ -847,9 +831,9 @@ to setup-static-globals
   ;;for MSM IDU and non-IDU
   set condom-use-MSM 
   [
-    0.79 0.45 0.45 0.28 0.26 0.21 0.10 0.06  ;;taking from NSSHB HET
+    0.79 0.79 0.45 0.45 0.28 0.26 0.26 0.21 0.21 0.10 0.10 0.06 0.06  ;;taking from NSSHB HET
    ;0.38 0.38 0.35 0.32 0.35 0.34 0.41 0.41 ;; NHBS main
-    0.57 0.57 0.57 0.54 0.54 0.53 0.52 0.52 ;; NHBS casual partner 
+    0.57 0.57 0.57 0.57 0.54 0.54 0.54 0.53 0.53 0.52 0.52 0.52 0.52;; NHBS casual partner 
   ]
   set condom-100perc 0.18;; proportion of MSM individuals using condoms  100% of time  
 
@@ -976,7 +960,7 @@ to setup-static-globals
   set viral-rebound-CD4-upper 
   [100 200 300 400 1000]
   set viral-rebound-CD4-lower 
-  [0 100 200 300 400 1000]
+  [0 100 200 300 400]
   set viral-rebound-increase 0.18
   set probability-initial-suppression 
   [0.774 0.79 0.84] ;stratified by CD4 count at ART <=50  50-200  >200 ;; [0.8 0.8 0.8] 
@@ -1032,7 +1016,18 @@ to setup-static-globals
     [0 0 0 0.30 0.47 0.23]
   ]
   
-  set-OI-probabilities 
+  set OI-risk-monthly  
+  [
+    [0.00000 0.00000 0.00000 0.00000 0.00000 0.00000]
+    [0.03700 0.03100 0.00960 0.00373 0.00085 0.00041]
+    [0.01220 0.00375 0.00101 0.00022 0.00006 0.00006]
+    [0.00270 0.00140 0.00067 0.00042 0.00009 0.00003]
+    [0.01857 0.00523 0.00214 0.00058 0.00013 0.00006]
+    [0.01123 0.00591 0.00135 0.00029 0.00028 0.00009]
+    [0.03940 0.02460 0.00716 0.00224 0.00087 0.00047]
+  ]
+  
+  set-OI-probabilities
   
   ;;Annual probabilities of dying when NOT on ART 
   ;startified by current CD4 0-40 50-199 200-349 350-499 500-649 >=650
@@ -1110,9 +1105,25 @@ to setup-static-globals
   ;set trans-rate-male 0.0008;0.0008
   ;set trans-rate-MSM-receptive 0.0018   ;;0.007
   ;set trans-rate-MSM-insertive 0.0082;; .014
-  
-  
+    
   ;;transmission probabilities: columns represent risk type of positive  person [female male MSM IDUfemale IDUmale IDUMSM]
+  
+  set trans-rate-prob 
+  [
+    0.0008 0.0008 0.002 0.0008 0.0008 0.0018  ;; vaginal sex probabilities
+    0.0018 0.0082 0.009 0.0018 0.0082 0.0082  ;; anal sex probabilities   
+  ]
+  
+  ;set trans-rate-prob map [i ->  i] trans-rate-prob
+  ;set trans-rate-needle trans-rate-needle
+  set reduction-VLS-trans-rate 0.99
+  set acute-rate-increase-base 8.1
+;  set acute-rate-increase-week 
+;  [8.1 8.1 8.1 8.1 8.1 8.1 8.1 6.75 5.4 4.05 2.7 1.35]
+  set acute-rate-increase-week-MSM 
+  [12.0 12.0 12.0 12.0 11.4 9.2 5.8 1.5 1.0 1.0 1.0 1.0]
+  set acute-rate-increase-week-HET 
+  [1.0 6.0 8.5 8.5 8.1 6.5 4.1 1.1 1.0 1.0 1.0 1.0]
   
   set-trans-rate-stage
   
@@ -1133,8 +1144,7 @@ to setup-static-globals
   ;Quarterly rates  of HIV transmission                      
   ;0.1834  0.1834  0.0226  0.0097  0.0097  0.0010    0.3343  0.3343  0.0413  0.0177  0.0177  0.0018
   ;saa  sau  snu  snan  snatn  snats    iaa  iau  inu  inan  inatn  inats
-  
-  
+    
   ;;Costs on 2010 dollars
   ;;OI prophylaxis + inpatient + outpatient + ED costs: incurred from start of care for HIV
   ;;quaterly
@@ -1186,19 +1196,51 @@ to setup-static-globals
   
 end
 
+to set-num-population
+  
+  set num-HET-FEM (perc-HET-FEM * number-people / overall-prevalence)
+  set num-HET-MEN num-HET-FEM
+  set num-MSM (perc-MSM * number-people / overall-prevalence) ;; assuming 2% of US population are MSM
+  set num-IDU-FEM (perc-IDU-FEM * number-people / overall-prevalence)
+  set num-IDU-MEN (perc-IDU-MEN * number-people / overall-prevalence)
+  set num-IDU-MSM (perc-IDU-MSM * number-people / overall-prevalence)
+  
+end
+
+to set-no-partners-monthly
+    
+  let i 0
+  let j 0
+  set no-partners-monthly n-values num-sex [n-values (length age-sexual) [0]]
+  print no-partners-monthly
+  
+  while [i < num-sex]
+  [
+    set j 0
+    while [j < length age-sexual]
+    [
+      set no-partners-monthly replace-item i no-partners-monthly (replace-item j (item i no-partners-monthly) ((item j (item i no-partners-yearly)) ^ (1 / 12)))
+      set j j + 1
+    ]
+    set i i + 1
+  ]
+  
+  print no-partners-monthly
+  
+;  set no-partners-monthly 
+;  [
+;    [0.84 0.84 0.83 0.78 0.79 0.78 0.80 0.82 0.82 0.82 0.82 0.82 0.82]
+;    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
+;    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
+;    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
+;    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
+;    [0.87 0.87 0.84 0.80 0.79 0.78 0.79 0.82 0.82 0.82 0.82 0.82 0.82]
+;  ]   
+  
+end
 
 to set-OI-probabilities 
-  ;;monthly risk of OI
-  let risk  
-  [
-    [0.00000 0.00000 0.00000 0.00000 0.00000 0.00000]
-    [0.03700 0.03100 0.00960 0.00373 0.00085 0.00041]
-    [0.01220 0.00375 0.00101 0.00022 0.00006 0.00006]
-    [0.00270 0.00140 0.00067 0.00042 0.00009 0.00003]
-    [0.01857 0.00523 0.00214 0.00058 0.00013 0.00006]
-    [0.01123 0.00591 0.00135 0.00029 0.00028 0.00009]
-    [0.03940 0.02460 0.00716 0.00224 0.00087 0.00047]
-  ]
+  
   set OI-probabilities n-values 7 [n-values num-stage [0]]
 
   ;;converting risk to probabilities per tim-unit
@@ -1206,7 +1248,7 @@ to set-OI-probabilities
   while [i < 6]
   [let j  0
     while [j < 7]
-    [let val item i (item j risk) 
+    [let val item i (item j OI-risk-monthly) 
       set OI-probabilities (replace-item j OI-probabilities (replace-item i (item j OI-probabilities) (1 - exp(- val * 12 / time-unit))))
       set j j + 1
     ]
@@ -1240,21 +1282,6 @@ end
 to set-trans-rate-stage
   ;;transmission probabilities: columns represent risk type of positive  person [female male MSM IDUfemale IDUmale IDUMSM] first 6 for vaginal sex 7-12 for anal sex
   ;;rows represent disease stage of person
-  set trans-rate-prob 
-  [
-    0.0008 0.0008 0.002 0.0008 0.0008 0.0018  ;; vaginal sex probabilities;; 0.0008  0.0008 0.0018  0.0008  0.0008 0.0018
-    0.0018 0.0082 0.009 0.0018 0.0082 0.0082
-  ];; anal sex probabilities   
-  ;set trans-rate-prob map [i ->  i] trans-rate-prob
-  ;set trans-rate-needle trans-rate-needle
-  set reduction-VLS-trans-rate 0.99
-  set acute-rate-increase-base 8.1
-  set acute-rate-increase-week 
-  [8.1 8.1 8.1 8.1 8.1 8.1 8.1 6.75 5.4 4.05 2.7 1.35]
-  set acute-rate-increase-week-MSM 
-  [12.0 12.0 12.0 12.0 11.4 9.2 5.8 1.5 1.0 1.0 1.0 1.0]
-  set acute-rate-increase-week-HET 
-  [1.0 6.0 8.5 8.5 8.1 6.5 4.1 1.1 1.0 1.0 1.0 1.0]
  
   set trans-rate-prob-stage n-values num-stage [n-values (num-sex * 2) [0]]
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  

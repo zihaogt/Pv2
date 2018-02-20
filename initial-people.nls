@@ -112,11 +112,11 @@ to setup-initial-people
     let stage-ind 0
     let found 0
     while [sex-ind < num-sex and found = 0]
-    [if rand-sex <= item sex-ind cum-sex
+    [if rand-sex <= item sex-ind cummulative-sex
       [set sex sex-ind + 1
         set stage-ind 0
         while [stage-ind < num-stage]
-        [if rand-stage <= item stage-ind (item sex-ind cum-stage)
+        [if rand-stage <= item stage-ind (item sex-ind cummulative-stage)
           [set stage stage-ind + 1
             set found 1]
           set stage-ind stage-ind + 1
@@ -145,27 +145,27 @@ to setup-initial-people
     if (stage = 2 and random-float 1 <= prop-num) or stage <= 1 or (stage = 3 and (sex = 3 or sex = 6) and random-float 1 <= prop-MSM-stage3-new) or (stage = 4 and (sex = 3 or sex = 6) and random-float 1 <= prop-MSM-stage4-new)
     ;0.041494974)
     [set new-infections 1
-      ifelse randnum <= (item 0 cum-age1)
+      ifelse randnum <= (item 0 cummulative-age1)
       [set age 13 + random 1]
-      [ifelse randnum <= (item 1 cum-age1)
+      [ifelse randnum <= (item 1 cummulative-age1)
         [set age 15 + random 4]
-        [ifelse randnum <= (item 2 cum-age1)
+        [ifelse randnum <= (item 2 cummulative-age1)
           [set age 20 + random 4]
-          [ifelse randnum <= (item 3 cum-age1)
+          [ifelse randnum <= (item 3 cummulative-age1)
             [set age 25 + random 4]
-            [ifelse randnum <= (item 4 cum-age1)
+            [ifelse randnum <= (item 4 cummulative-age1)
               [set age 30 + random 4]
-              [ifelse randnum <= (item 5 cum-age1)
+              [ifelse randnum <= (item 5 cummulative-age1)
                 [set age 35 + random 4]
-                [ifelse randnum <= (item 6 cum-age1)
+                [ifelse randnum <= (item 6 cummulative-age1)
                   [set age 40 + random 4]
-                  [ifelse randnum <= (item 7 cum-age1)
+                  [ifelse randnum <= (item 7 cummulative-age1)
                     [set age 45 + random 4]
-                    [ifelse randnum <= (item 8 cum-age1)
+                    [ifelse randnum <= (item 8 cummulative-age1)
                       [set age 50 + random 4]
-                      [ifelse randnum <= (item 9 cum-age1)
+                      [ifelse randnum <= (item 9 cummulative-age1)
                         [set age 55 + random 4]
-                        [ifelse randnum <= (item 10 cum-age1)
+                        [ifelse randnum <= (item 10 cummulative-age1)
                           [set age 60 + random 4]
                           [set age 65 + random 5]
                         ]
@@ -189,27 +189,27 @@ to setup-initial-people
     set randnum random-float 1
     ;Set of remaining people
     if age = 0
-    [ifelse randnum <= (item 0 cum-age2)
+    [ifelse randnum <= (item 0 cummulative-age2)
       [set age 13 + random 1]
-      [ifelse randnum <= (item 1 cum-age2)
+      [ifelse randnum <= (item 1 cummulative-age2)
         [set age 15 + random 4]
-        [ifelse randnum <= (item 2 cum-age2)
+        [ifelse randnum <= (item 2 cummulative-age2)
           [set age 20 + random 4]
-          [ifelse randnum <= (item 3 cum-age2)
+          [ifelse randnum <= (item 3 cummulative-age2)
             [set age 25 + random 4]
-            [ifelse randnum <= (item 4 cum-age2)
+            [ifelse randnum <= (item 4 cummulative-age2)
               [set age 30 + random 4]
-              [ifelse randnum <= (item 5 cum-age2)
+              [ifelse randnum <= (item 5 cummulative-age2)
                 [set age 35 + random 4]
-                [ifelse randnum <= (item 6 cum-age2)
+                [ifelse randnum <= (item 6 cummulative-age2)
                   [set age 40 + random 4]
-                  [ifelse randnum <= (item 7 cum-age2)
+                  [ifelse randnum <= (item 7 cummulative-age2)
                     [set age 45 + random 4]
-                    [ifelse randnum <= (item 8 cum-age2)
+                    [ifelse randnum <= (item 8 cummulative-age2)
                       [set age 50 + random 4]
-                      [ifelse randnum <= (item 9 cum-age2)
+                      [ifelse randnum <= (item 9 cummulative-age2)
                         [set age 55 + random 4]
-                        [ifelse randnum <= (item 10 cum-age2)
+                        [ifelse randnum <= (item 10 cummulative-age2)
                           [set age 60 + random 4]
                           [set age 65 + random 5]
                         ]
